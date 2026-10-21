@@ -93,6 +93,7 @@ exe = EXE(
     a.datas,
     [],
     name="gdrive-dl",
+    icon=str(root / "assets" / "logo.ico"),
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

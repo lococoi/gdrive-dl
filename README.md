@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.png" alt="gdrive-dl logo" width="160">
+</p>
+
 # gdrive-dl
 
 **Private Google Drive downloads without the usual session headaches.**
@@ -260,6 +264,12 @@ The build script:
 
 The executable is intentionally slim: it includes the Google Drive, generic, and common extractors, not the complete yt-dlp site list. Run from source with the full package for other providers. For an offline build, pass `--skip-ytdlp-upgrade` to use the already installed package.
 
+The Windows icon is committed as `assets/logo.ico`. Regenerate it from `assets/logo.png` with:
+
+```powershell
+python scripts/generate_icon.py
+```
+
 The executable is portable but still requires Google Chrome for authentication. Its profile, downloads, and logs are created next to the executable unless environment variables point elsewhere. The executable is not code-signed; Windows SmartScreen may show a warning for local builds.
 
 ### Project structure
@@ -284,7 +294,10 @@ gdrive_dl/
     text.py              ANSI stripping
 gdrive-dl.py             Source entry point and PyInstaller entry
 gdrive-dl.spec           PyInstaller slim one-file specification
+assets/logo.png          Application logo
+assets/logo.ico          Multi-resolution Windows icon
 scripts/build_exe.py     Standalone executable build script
+scripts/generate_icon.py Logo-to-ICO generator
 tests/                   Unit and API tests
 .github/workflows/ci.yml Test, build, artifact, and release workflow
 ```
@@ -589,6 +602,12 @@ El script de build:
 
 El ejecutable es intencionalmente slim: incluye los extractores de Google Drive, genéricos y comunes, no la lista completa de sitios de yt-dlp. Ejecuta desde el código fuente con el paquete completo para otros proveedores. Para un build sin conexión, usa `--skip-ytdlp-upgrade` para reutilizar el paquete ya instalado.
 
+El icono de Windows está versionado como `assets/logo.ico`. Regénéralo desde `assets/logo.png` con:
+
+```powershell
+python scripts/generate_icon.py
+```
+
 El ejecutable es portable, pero sigue necesitando Google Chrome para autenticarse. Su perfil, descargas y logs se crean junto al ejecutable salvo que las variables de entorno apunten a otra ruta. El ejecutable no está firmado; Windows SmartScreen puede mostrar una advertencia en builds locales.
 
 ### Estructura del proyecto
@@ -613,7 +632,10 @@ gdrive_dl/
     text.py              Limpieza de ANSI
 gdrive-dl.py             Entry point fuente y entry point de PyInstaller
 gdrive-dl.spec           Especificación one-file slim de PyInstaller
+assets/logo.png          Logo de la aplicación
+assets/logo.ico          Icono Windows multirresolución
 scripts/build_exe.py     Script de build del ejecutable autocontenido
+scripts/generate_icon.py Generador de ICO desde el logo
 tests/                   Pruebas unitarias y de API
 .github/workflows/ci.yml Workflow de test, build, artefacto y release
 ```
