@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from gdrive_dl import __version__
 from gdrive_dl.api import ApiApplicationFactory
 from gdrive_dl.config import ConfigFactory
 from gdrive_dl.container import ServiceContainer
@@ -62,7 +63,7 @@ class ApiTests(unittest.TestCase):
                     ),
                     yt_dlp_available=True,
                     yt_dlp_version="2026.08.19",
-                    app_version="2.0.0",
+                    app_version=__version__,
                 )
 
         container = ServiceContainer(

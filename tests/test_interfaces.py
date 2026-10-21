@@ -8,6 +8,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from gdrive_dl import __version__
 from gdrive_dl.api import ApiErrorMapper
 from gdrive_dl.cli import (
     ApplicationBootstrap,
@@ -92,7 +93,7 @@ class ApplicationBootstrapTests(unittest.TestCase):
             exit_code = application.run(["status", "--json"])
             self.assertEqual(exit_code, ExitCode.OK)
             payload = json.loads(stdout.getvalue())
-            self.assertEqual(payload["app_version"], "2.0.0")
+            self.assertEqual(payload["app_version"], __version__)
             self.assertFalse(payload["session"]["available"])
 
     def test_invalid_url_returns_usage_exit_code(self) -> None:

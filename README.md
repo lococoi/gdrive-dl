@@ -43,8 +43,8 @@ Downloading a private Google Drive file is not just an HTTP request. Google requ
 
 - Python 3.11 or newer for running from source.
 - Google Chrome installed. The login flow launches Chrome directly; Selenium and ChromeDriver are not required.
-- `yt-dlp`. The Python package is installed by `pip install -e .`; the standalone executable embeds the official Windows binary. It can also be provided through `PATH` or `GDRIVE_YTDLP`.
-- Network access to Google Drive and, when the binary is missing, to GitHub for the `yt-dlp` release.
+- `yt-dlp`. The Python package is installed by `pip install -e .`; the standalone executable always embeds the latest official Windows build at build time. It can also be provided through `PATH` or `GDRIVE_YTDLP` when running from source.
+- Network access to Google Drive and to GitHub while building the standalone executable.
 - Windows for the prebuilt executable. The source package also runs on Linux and macOS with Chrome installed.
 
 ### Installation
@@ -254,9 +254,11 @@ python scripts/build_exe.py
 
 The build script:
 
-1. Uses the local `yt-dlp.exe` if present, otherwise downloads the latest official Windows release.
+1. Downloads the latest official Windows build of `yt-dlp` from GitHub, replacing any older local copy only after the download and validation succeed.
 2. Runs PyInstaller with `gdrive-dl.spec`.
-3. Produces `dist/gdrive-dl.exe` with Python, FastAPI, Uvicorn, Pydantic, and `yt-dlp.exe` embedded.
+3. Produces `dist/gdrive-dl.exe` with Python, FastAPI, Uvicorn, Pydantic, and the latest `yt-dlp.exe` embedded.
+
+For an offline build, pass `--use-local` to reuse the existing `yt-dlp.exe`. For a reproducible build pinned to a specific release, pass `--yt-dlp-url` with the asset URL of that release.
 
 The executable is portable but still requires Google Chrome for authentication. Its profile, downloads, and logs are created next to the executable unless environment variables point elsewhere. The executable is not code-signed; Windows SmartScreen may show a warning for local builds.
 
@@ -369,8 +371,8 @@ Descargar un archivo privado de Google Drive no es solo una petición HTTP. Goog
 
 - Python 3.11 o superior para ejecutar desde el código fuente.
 - Google Chrome instalado. El login lanza Chrome directamente; no se necesitan Selenium ni ChromeDriver.
-- `yt-dlp`. El paquete de Python se instala con `pip install -e .`; el ejecutable autocontenido embebe el binario oficial de Windows. También se puede proporcionar mediante `PATH` o `GDRIVE_YTDLP`.
-- Acceso a Google Drive y, cuando falta el binario, a GitHub para descargar la release de `yt-dlp`.
+- `yt-dlp`. El paquete de Python se instala con `pip install -e .`; el ejecutable autocontenido siempre embebe la última build oficial de Windows al momento de compilar. También se puede proporcionar mediante `PATH` o `GDRIVE_YTDLP` al ejecutar desde el código fuente.
+- Acceso a Google Drive y a GitHub durante la compilación del ejecutable autocontenido.
 - Windows para el ejecutable precompilado. El paquete fuente también funciona en Linux y macOS con Chrome instalado.
 
 ### Instalación
@@ -580,9 +582,11 @@ python scripts/build_exe.py
 
 El script de build:
 
-1. Usa el `yt-dlp.exe` local si existe; si no, descarga la última release oficial para Windows.
+1. Descarga la última build oficial de Windows de `yt-dlp` desde GitHub y reemplaza cualquier copia local anterior solo después de que la descarga y la validación terminen correctamente.
 2. Ejecuta PyInstaller con `gdrive-dl.spec`.
-3. Genera `dist/gdrive-dl.exe` con Python, FastAPI, Uvicorn, Pydantic y `yt-dlp.exe` embebidos.
+3. Genera `dist/gdrive-dl.exe` con Python, FastAPI, Uvicorn, Pydantic y el `yt-dlp.exe` más reciente embebido.
+
+Para un build sin conexión, usa `--use-local` para reutilizar el `yt-dlp.exe` existente. Para un build reproducible fijado a una release concreta, pasa `--yt-dlp-url` con la URL del asset de esa release.
 
 El ejecutable es portable, pero sigue necesitando Google Chrome para autenticarse. Su perfil, descargas y logs se crean junto al ejecutable salvo que las variables de entorno apunten a otra ruta. El ejecutable no está firmado; Windows SmartScreen puede mostrar una advertencia en builds locales.
 
