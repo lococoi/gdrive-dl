@@ -2,80 +2,45 @@ from __future__ import annotations
 
 import argparse
 import os
-import shutil
 import subprocess
 import sys
-import urllib.request
 from pathlib import Path
-
-DEFAULT_YT_DLP_URL = (
-    "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe"
-)
 
 
 class BuildError(RuntimeError):
     pass
 
 
-class YtDlpBinaryProvider:
-    def __init__(self, root: Path, url: str, *, use_local: bool = False) -> None:
-        self._url = url
-        self._target = root / "yt-dlp.exe"
-        self._use_local = use_local
+class YtDlpPackageProvider:
+    def __init__(self, *, upgrade: bool = True) -> None:
+        self._upgrade = upgrade
 
-    def ensure(self) -> Path:
-        if self._use_local:
-            if not self._target.is_file():
-                raise BuildError(
-                    "--use-local was requested, but yt-dlp.exe does not exist."
-                )
-            self._validate(self._target)
-            return self._target
-
-        temporary = self._target.with_name("yt-dlp.exe.download")
-        print(f"Downloading the latest yt-dlp Windows build from {self._url}")
-        try:
-            request = urllib.request.Request(
-                self._url,
-                headers={"User-Agent": "gdrive-dl-build"},
+    def ensure_latest(self) -> str:
+        if self._upgrade:
+            print("Installing the latest yt-dlp release from PyPI")
+            subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "pip",
+                    "install",
+                    "--upgrade",
+                    "--no-cache-dir",
+                    "yt-dlp",
+                ],
+                check=True,
             )
-            with urllib.request.urlopen(
-                request,
-                timeout=120,
-            ) as response, temporary.open("wb") as output:
-                shutil.copyfileobj(response, output)
-            self._validate(temporary)
-            temporary.replace(self._target)
-        except BuildError:
-            temporary.unlink(missing_ok=True)
-            raise
-        except Exception as exc:
-            temporary.unlink(missing_ok=True)
-            raise BuildError(f"Could not download yt-dlp: {exc}") from exc
 
-        return self._target
+        try:
+            import yt_dlp.version
+        except ImportError as exc:
+            raise BuildError(
+                "yt-dlp is not installed. Install requirements-dev.txt first."
+            ) from exc
 
-    @staticmethod
-    def version(path: Path) -> str:
-        result = subprocess.run(
-            [str(path), "--version"],
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            timeout=30,
-            check=True,
-        )
-        lines = [line.strip() for line in result.stdout.splitlines() if line.strip()]
-        return lines[-1] if lines else "unknown"
-
-    @staticmethod
-    def _validate(path: Path) -> None:
-        if path.stat().st_size < 1_000_000:
-            raise BuildError(f"yt-dlp binary looks incomplete: {path}")
-        with path.open("rb") as handle:
-            if handle.read(2) != b"MZ":
-                raise BuildError(f"yt-dlp is not a Windows executable: {path}")
+        version = yt_dlp.version.__version__
+        print(f"Using yt-dlp {version} (Python package)")
+        return version
 
 
 class PyInstallerBuilder:
@@ -109,28 +74,12 @@ class PyInstallerBuilder:
 
 
 class BuildApplication:
-    def __init__(
-        self,
-        root: Path,
-        yt_dlp_url: str,
-        *,
-        use_local_yt_dlp: bool = False,
-    ) -> None:
+    def __init__(self, root: Path, *, upgrade_yt_dlp: bool = True) -> None:
         self._root = root
-        self._yt_dlp_url = yt_dlp_url
-        self._use_local_yt_dlp = use_local_yt_dlp
+        self._upgrade_yt_dlp = upgrade_yt_dlp
 
     def run(self) -> Path:
-        provider = YtDlpBinaryProvider(
-            self._root,
-            self._yt_dlp_url,
-            use_local=self._use_local_yt_dlp,
-        )
-        yt_dlp = provider.ensure()
-        print(
-            f"Using yt-dlp {provider.version(yt_dlp)}: "
-            f"{yt_dlp} ({self._size(yt_dlp)})"
-        )
+        YtDlpPackageProvider(upgrade=self._upgrade_yt_dlp).ensure_latest()
         executable = PyInstallerBuilder(self._root).build()
         print(f"Built: {executable} ({self._size(executable)})")
         return executable
@@ -145,19 +94,11 @@ def main(argv: list[str] | None = None) -> int:
         description="Build a self-contained gdrive-dl executable for Windows."
     )
     parser.add_argument(
-        "--yt-dlp-url",
-        default=DEFAULT_YT_DLP_URL,
-        help=(
-            "URL used to download the Windows yt-dlp build. "
-            "Defaults to the latest official release."
-        ),
-    )
-    parser.add_argument(
-        "--use-local",
+        "--skip-ytdlp-upgrade",
         action="store_true",
         help=(
-            "Use an existing yt-dlp.exe instead of downloading the latest "
-            "Windows build. Intended for offline builds."
+            "Use the installed yt-dlp version instead of installing the latest "
+            "release from PyPI. Intended for offline builds."
         ),
     )
     arguments = parser.parse_args(argv)
@@ -165,8 +106,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         BuildApplication(
             root,
-            arguments.yt_dlp_url,
-            use_local_yt_dlp=arguments.use_local,
+            upgrade_yt_dlp=not arguments.skip_ytdlp_upgrade,
         ).run()
     except (BuildError, subprocess.CalledProcessError) as exc:
         print(f"Build failed: {exc}", file=sys.stderr)

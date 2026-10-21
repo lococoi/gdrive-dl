@@ -20,6 +20,7 @@ from ..errors import (
 )
 from ..models import DownloadResult, DownloadStatus, DownloadUrl, ProcessResult
 from ..ports import Downloader, ProcessRunner, ProgressReporter, ToolVersionProvider
+from .embedded_ytdlp import EmbeddedYtDlp
 from .text import AnsiStripper
 
 _VERSION_UNSET = object()
@@ -65,6 +66,14 @@ class YtDlpLocator(ToolVersionProvider):
         for candidate in bundled_candidates:
             if candidate.is_file():
                 return (str(candidate.resolve()),)
+
+        if getattr(sys, "frozen", False):
+            try:
+                embedded_available = importlib.util.find_spec("yt_dlp") is not None
+            except (ImportError, ValueError):
+                embedded_available = False
+            if embedded_available:
+                return (sys.executable, EmbeddedYtDlp.COMMAND)
 
         for filename in ("yt-dlp.exe", "yt-dlp"):
             candidate = self._base_dir / filename
@@ -235,6 +244,14 @@ class YtDlpDownloader(Downloader):
         lowered = f"{result.stderr}\n{result.stdout}".lower()
         clean = self._sanitizer.sanitize(f"{result.stderr}\n{result.stdout}")
 
+        if "no module named 'yt_dlp.extractor." in lowered:
+            return UnsupportedUrlError(
+                "Esta build slim no incluye el extractor para este sitio.",
+                hint=(
+                    "El ejecutable incluye Google Drive y extractores genéricos. "
+                    "Ejecuta desde el código fuente para el conjunto completo de yt-dlp."
+                ),
+            )
         if "unsupported url" in lowered:
             return UnsupportedUrlError(
                 f"yt-dlp no soporta esta URL: {target.redacted}",

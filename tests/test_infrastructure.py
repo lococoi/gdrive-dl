@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import contextlib
+import importlib.util
+import io
 import logging
 import sqlite3
 import sys
@@ -25,6 +28,7 @@ from gdrive_dl.infrastructure.chrome import (
     ChromeProfileRepository,
     SqliteCookieInspector,
 )
+from gdrive_dl.infrastructure.embedded_ytdlp import EmbeddedYtDlp
 from gdrive_dl.infrastructure.fs import OutputDirectory
 from gdrive_dl.infrastructure.process import SubprocessRunner, TailBuffer
 from gdrive_dl.infrastructure.progress import NullProgressReporter
@@ -204,6 +208,45 @@ class YtDlpLocatorTests(unittest.TestCase):
             )
             with patch.object(sys, "_MEIPASS", str(base), create=True):
                 self.assertEqual(locator.resolve(), (str(bundled.resolve()),))
+
+    def test_frozen_build_uses_embedded_python_package(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            executable = Path(temporary) / "gdrive-dl.exe"
+            locator = YtDlpLocator(
+                Path(temporary),
+                None,
+                FakeRunner(),
+                logging.getLogger("test"),
+            )
+            with patch.object(sys, "frozen", True, create=True), patch.object(
+                sys,
+                "executable",
+                str(executable),
+            ), patch(
+                "gdrive_dl.infrastructure.yt_dlp.importlib.util.find_spec",
+                return_value=object(),
+            ):
+                self.assertEqual(
+                    locator.resolve(),
+                    (str(executable), EmbeddedYtDlp.COMMAND),
+                )
+
+
+class EmbeddedYtDlpTests(unittest.TestCase):
+    def test_invocation_detection(self) -> None:
+        self.assertTrue(EmbeddedYtDlp.is_invocation(["gdrive-dl", "__yt-dlp"]))
+        self.assertFalse(EmbeddedYtDlp.is_invocation(["gdrive-dl", "status"]))
+
+    @unittest.skipUnless(
+        importlib.util.find_spec("yt_dlp") is not None,
+        "yt-dlp Python package is not installed",
+    )
+    def test_reports_embedded_version(self) -> None:
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            result = EmbeddedYtDlp().run(["--version"])
+        self.assertEqual(result, 0)
+        self.assertTrue(output.getvalue().strip())
 
 
 class ProcessRunnerTests(unittest.TestCase):

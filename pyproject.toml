@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gdrive-dl"
-version = "1.0.2"
+version = "1.0.3"
 description = "Reliable CLI and HTTP API for downloading private Google Drive files with an isolated Chrome session."
 readme = "README.md"
 requires-python = ">=3.11"

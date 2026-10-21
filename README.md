@@ -30,21 +30,21 @@ Downloading a private Google Drive file is not just an HTTP request. Google requ
 
 - Isolated Chrome profile. Your daily browser profile is not modified.
 - Real session validation. The tool reads Google authentication cookie names from `Default/Network/Cookies` in read-only mode; it does not decrypt or print cookie values.
-- Reliable `yt-dlp` resolution. The binary can be bundled with the executable, placed next to the source, found on `PATH`, or installed as a Python module.
+- Reliable `yt-dlp` resolution. The slim executable embeds the latest Python package, while source runs can also use a binary placed next to the code, found on `PATH`, or selected with `GDRIVE_YTDLP`.
 - Process safety. Downloads have configurable timeouts, bounded output capture, process-tree termination, and retry with exponential backoff for transient failures.
 - Download safety. HTTPS-only URLs, a Google Drive host allowlist, private-IP rejection, `--no-playlist`, `--no-overwrites`, resumable downloads, and Windows-safe filenames.
 - Bounded concurrency. The API limits simultaneous downloads and returns HTTP 429 when the limit is reached.
 - Local API security. The server binds to `127.0.0.1` by default. Exposing it on a non-loopback interface requires a bearer token.
 - Operational diagnostics. `status` reports session and tool state; `doctor` checks Python, Chrome, `yt-dlp`, the profile, output permissions, API dependencies, and disk space.
-- Standalone Windows build. The CI workflow produces a single-file `gdrive-dl.exe` with Python, FastAPI, Uvicorn, and `yt-dlp` embedded.
+- Standalone Windows build. The CI workflow produces a single-file `gdrive-dl.exe` with Python, FastAPI, Uvicorn, and the latest `yt-dlp` package embedded. The slim build keeps only the Google Drive and generic extractors, which cuts the executable size roughly in half.
 - Typed OOP architecture. Immutable value objects, abstract ports, dependency injection, typed exceptions, and no global application state.
 
 ### Requirements
 
 - Python 3.11 or newer for running from source.
 - Google Chrome installed. The login flow launches Chrome directly; Selenium and ChromeDriver are not required.
-- `yt-dlp`. The Python package is installed by `pip install -e .`; the standalone executable always embeds the latest official Windows build at build time. It can also be provided through `PATH` or `GDRIVE_YTDLP` when running from source.
-- Network access to Google Drive and to GitHub while building the standalone executable.
+- `yt-dlp`. The Python package is installed by `pip install -e .`; the standalone executable always embeds the latest release from PyPI at build time. Source runs can also use a binary provided through `PATH` or `GDRIVE_YTDLP`.
+- Network access to Google Drive and to PyPI while building the standalone executable.
 - Windows for the prebuilt executable. The source package also runs on Linux and macOS with Chrome installed.
 
 ### Installation
@@ -125,7 +125,7 @@ flowchart LR
 2. `status` opens the Chrome cookie database in read-only mode and counts known Google authentication cookies. This distinguishes a real session from a directory that merely contains files.
 3. `download` validates the URL, verifies the session, prepares the output directory, and runs `yt-dlp` with `--cookies-from-browser chrome:<absolute-profile-path>`.
 4. `api` builds a FastAPI application with the same services. Requests are validated, mapped to typed HTTP errors, and limited by the configured concurrency semaphore.
-5. The standalone executable performs the same work while embedding Python, the API stack, and `yt-dlp.exe`.
+5. The standalone executable performs the same work while embedding Python, the API stack, and the latest `yt-dlp` package.
 
 ### CLI reference
 
@@ -254,11 +254,11 @@ python scripts/build_exe.py
 
 The build script:
 
-1. Downloads the latest official Windows build of `yt-dlp` from GitHub, replacing any older local copy only after the download and validation succeed.
+1. Installs the latest `yt-dlp` release from PyPI.
 2. Runs PyInstaller with `gdrive-dl.spec`.
-3. Produces `dist/gdrive-dl.exe` with Python, FastAPI, Uvicorn, Pydantic, and the latest `yt-dlp.exe` embedded.
+3. Produces `dist/gdrive-dl.exe` with Python, FastAPI, Uvicorn, Pydantic, and the latest `yt-dlp` package embedded.
 
-For an offline build, pass `--use-local` to reuse the existing `yt-dlp.exe`. For a reproducible build pinned to a specific release, pass `--yt-dlp-url` with the asset URL of that release.
+The executable is intentionally slim: it includes the Google Drive, generic, and common extractors, not the complete yt-dlp site list. Run from source with the full package for other providers. For an offline build, pass `--skip-ytdlp-upgrade` to use the already installed package.
 
 The executable is portable but still requires Google Chrome for authentication. Its profile, downloads, and logs are created next to the executable unless environment variables point elsewhere. The executable is not code-signed; Windows SmartScreen may show a warning for local builds.
 
@@ -283,7 +283,7 @@ gdrive_dl/
     progress.py          Null and stream progress reporters
     text.py              ANSI stripping
 gdrive-dl.py             Source entry point and PyInstaller entry
-gdrive-dl.spec           PyInstaller one-file specification
+gdrive-dl.spec           PyInstaller slim one-file specification
 scripts/build_exe.py     Standalone executable build script
 tests/                   Unit and API tests
 .github/workflows/ci.yml Test, build, artifact, and release workflow
@@ -318,6 +318,7 @@ This structure keeps the core testable without Chrome, network access, or `yt-dl
 - Google Chrome is required. The tool does not manage passwords or bypass Google's login challenges.
 - Chrome 127 and newer can use app-bound cookie encryption. If `yt-dlp` cannot decrypt the profile cookies, use a compatible browser/profile or export cookies through a method supported by `yt-dlp`.
 - The API provides a concurrency limit and an optional bearer token, but it is not a hardened public service. It has no user accounts, rate-limit storage, job queue, or download cancellation.
+- The standalone executable bundles only the Google Drive, generic, and common extractors to keep its size down. Site-specific extractors for other providers are available when running from source with the full `yt-dlp` package.
 - `--allow-any-host` permits other public sites, but it still rejects private IP literals and local hostnames. DNS rebinding is outside the scope of a local tool.
 - Folder downloads are intentionally rejected because `yt-dlp` does not provide a reliable Google Drive folder extractor.
 
@@ -358,21 +359,21 @@ Descargar un archivo privado de Google Drive no es solo una petición HTTP. Goog
 
 - Perfil de Chrome aislado. Tu perfil diario del navegador no se modifica.
 - Validación real de sesión. La herramienta lee nombres de cookies de autenticación de Google desde `Default/Network/Cookies` en modo de solo lectura; no descifra ni imprime sus valores.
-- Resolución confiable de `yt-dlp`. El binario puede estar embebido en el ejecutable, junto al código, en `PATH` o instalado como módulo de Python.
+- Resolución confiable de `yt-dlp`. El ejecutable slim embebe el paquete de Python más reciente; al ejecutar desde el código fuente también se puede usar un binario junto al código, en `PATH` o indicado con `GDRIVE_YTDLP`.
 - Seguridad de procesos. Las descargas tienen timeout configurable, captura acotada de salida, terminación del árbol de procesos y reintentos con backoff exponencial para fallos transitorios.
 - Seguridad de descargas. URLs solo HTTPS, allowlist de hosts de Google Drive, rechazo de IPs privadas, `--no-playlist`, `--no-overwrites`, reanudación de descargas y nombres compatibles con Windows.
 - Concurrencia limitada. La API limita las descargas simultáneas y devuelve HTTP 429 al alcanzar el límite.
 - Seguridad local de la API. El servidor escucha en `127.0.0.1` por defecto. Exponerlo en una interfaz no local exige un token Bearer.
 - Diagnóstico operativo. `status` informa el estado de la sesión y de las herramientas; `doctor` comprueba Python, Chrome, `yt-dlp`, el perfil, permisos de salida, dependencias de la API y espacio en disco.
-- Build Windows autocontenido. El CI produce un único `gdrive-dl.exe` con Python, FastAPI, Uvicorn y `yt-dlp` embebidos.
+- Build Windows autocontenido. El CI produce un único `gdrive-dl.exe` con Python, FastAPI, Uvicorn y el paquete `yt-dlp` más reciente embebidos. El build slim conserva solo los extractores de Google Drive y genéricos, lo que reduce el tamaño del ejecutable aproximadamente a la mitad.
 - Arquitectura OOP tipada. Value objects inmutables, puertos abstractos, inyección de dependencias, excepciones tipadas y ausencia de estado global de la aplicación.
 
 ### Requisitos
 
 - Python 3.11 o superior para ejecutar desde el código fuente.
 - Google Chrome instalado. El login lanza Chrome directamente; no se necesitan Selenium ni ChromeDriver.
-- `yt-dlp`. El paquete de Python se instala con `pip install -e .`; el ejecutable autocontenido siempre embebe la última build oficial de Windows al momento de compilar. También se puede proporcionar mediante `PATH` o `GDRIVE_YTDLP` al ejecutar desde el código fuente.
-- Acceso a Google Drive y a GitHub durante la compilación del ejecutable autocontenido.
+- `yt-dlp`. El paquete de Python se instala con `pip install -e .`; el ejecutable autocontenido siempre embebe la última release de PyPI al momento de compilar. Al ejecutar desde el código fuente también se puede usar un binario proporcionado mediante `PATH` o `GDRIVE_YTDLP`.
+- Acceso a Google Drive y a PyPI durante la compilación del ejecutable autocontenido.
 - Windows para el ejecutable precompilado. El paquete fuente también funciona en Linux y macOS con Chrome instalado.
 
 ### Instalación
@@ -453,7 +454,7 @@ flowchart LR
 2. `status` abre la base de cookies de Chrome en modo de solo lectura y cuenta las cookies conocidas de autenticación de Google. Así se distingue una sesión real de una carpeta que solo contiene archivos.
 3. `download` valida la URL, verifica la sesión, prepara la carpeta de salida y ejecuta `yt-dlp` con `--cookies-from-browser chrome:<ruta-absoluta-del-perfil>`.
 4. `api` construye una aplicación FastAPI con los mismos servicios. Las peticiones se validan, se convierten en errores HTTP tipados y se limitan con el semáforo de concurrencia configurado.
-5. El ejecutable autocontenido realiza el mismo trabajo con Python, el stack de la API y `yt-dlp.exe` embebidos.
+5. El ejecutable autocontenido realiza el mismo trabajo con Python, el stack de la API y el paquete `yt-dlp` más reciente embebidos.
 
 ### Referencia de la CLI
 
@@ -582,11 +583,11 @@ python scripts/build_exe.py
 
 El script de build:
 
-1. Descarga la última build oficial de Windows de `yt-dlp` desde GitHub y reemplaza cualquier copia local anterior solo después de que la descarga y la validación terminen correctamente.
+1. Instala la última release de `yt-dlp` desde PyPI.
 2. Ejecuta PyInstaller con `gdrive-dl.spec`.
-3. Genera `dist/gdrive-dl.exe` con Python, FastAPI, Uvicorn, Pydantic y el `yt-dlp.exe` más reciente embebido.
+3. Genera `dist/gdrive-dl.exe` con Python, FastAPI, Uvicorn, Pydantic y el paquete `yt-dlp` más reciente embebido.
 
-Para un build sin conexión, usa `--use-local` para reutilizar el `yt-dlp.exe` existente. Para un build reproducible fijado a una release concreta, pasa `--yt-dlp-url` con la URL del asset de esa release.
+El ejecutable es intencionalmente slim: incluye los extractores de Google Drive, genéricos y comunes, no la lista completa de sitios de yt-dlp. Ejecuta desde el código fuente con el paquete completo para otros proveedores. Para un build sin conexión, usa `--skip-ytdlp-upgrade` para reutilizar el paquete ya instalado.
 
 El ejecutable es portable, pero sigue necesitando Google Chrome para autenticarse. Su perfil, descargas y logs se crean junto al ejecutable salvo que las variables de entorno apunten a otra ruta. El ejecutable no está firmado; Windows SmartScreen puede mostrar una advertencia en builds locales.
 
@@ -611,7 +612,7 @@ gdrive_dl/
     progress.py          Reporteros de progreso nulo y de stream
     text.py              Limpieza de ANSI
 gdrive-dl.py             Entry point fuente y entry point de PyInstaller
-gdrive-dl.spec           Especificación one-file de PyInstaller
+gdrive-dl.spec           Especificación one-file slim de PyInstaller
 scripts/build_exe.py     Script de build del ejecutable autocontenido
 tests/                   Pruebas unitarias y de API
 .github/workflows/ci.yml Workflow de test, build, artefacto y release
@@ -646,6 +647,7 @@ Esta estructura mantiene el núcleo testeable sin Chrome, sin red y sin `yt-dlp`
 - Google Chrome es obligatorio. La herramienta no gestiona contraseñas ni evita los desafíos de login de Google.
 - Chrome 127 y posteriores pueden usar cifrado de cookies vinculado a la aplicación. Si `yt-dlp` no puede descifrar las cookies del perfil, usa un navegador o perfil compatible, o exporta cookies mediante un método soportado por `yt-dlp`.
 - La API ofrece límite de concurrencia y token Bearer opcional, pero no es un servicio público endurecido. No tiene cuentas de usuario, almacenamiento de rate limits, cola de trabajos ni cancelación de descargas.
+- El ejecutable autocontenido incluye solo los extractores de Google Drive, genéricos y comunes para reducir su tamaño. Los extractores específicos de otros proveedores están disponibles al ejecutar desde el código fuente con el paquete completo de `yt-dlp`.
 - `--allow-any-host` permite otros sitios públicos, pero sigue rechazando IPs privadas y nombres locales. DNS rebinding queda fuera del alcance de una herramienta local.
 - Las descargas de carpetas se rechazan intencionalmente porque `yt-dlp` no ofrece un extractor confiable para carpetas de Google Drive.
 

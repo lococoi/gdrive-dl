@@ -73,7 +73,10 @@ class ApiApplicationFactory:
         except ImportError as exc:
             raise DependencyUnavailableError(
                 "Faltan dependencias para la API.",
-                hint="Instala FastAPI, Uvicorn y Pydantic con: pip install -r requirements.txt",
+                hint=(
+                    f"{exc}. Instala FastAPI, Uvicorn y Pydantic con: "
+                    "pip install -r requirements.txt"
+                ),
             ) from exc
 
         class DownloadRequest(BaseModel):
@@ -243,7 +246,10 @@ class ApiServer:
         except ImportError as exc:
             raise DependencyUnavailableError(
                 "Faltan dependencias para la API.",
-                hint="Instala FastAPI, Uvicorn y Pydantic con: pip install -r requirements.txt",
+                hint=(
+                    f"{exc}. Instala FastAPI, Uvicorn y Pydantic con: "
+                    "pip install -r requirements.txt"
+                ),
             ) from exc
 
         container = self._container_factory.create(NullProgressReporter())
