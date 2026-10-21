@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+        python-version:
+          - "3.12"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+
+      - name: Lint
+        run: ruff check gdrive_dl tests scripts gdrive-dl.py
+
+      - name: Type check
+        run: mypy gdrive_dl --ignore-missing-imports
+
+      - name: Run tests
+        run: python -m unittest discover -s tests -t . -v
+
+  build:
+    name: Build Windows executable
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+
+      - name: Build standalone executable
+        run: python scripts/build_exe.py
+
+      - name: Smoke test executable
+        shell: pwsh
+        run: |
+          .\dist\gdrive-dl.exe --version
+          .\dist\gdrive-dl.exe status --json
+
+      - name: Upload executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: gdrive-dl-windows-x64
+          path: dist/gdrive-dl.exe
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: Publish tagged release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download executable
+        uses: actions/download-artifact@v4
+        with:
+          name: gdrive-dl-windows-x64
+          path: dist
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/gdrive-dl.exe
+          generate_release_notes: true

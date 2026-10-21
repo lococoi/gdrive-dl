@@ -1,0 +1,5 @@
+-r requirements.txt
+httpx>=0.28
+mypy>=1.13
+pyinstaller>=6.10
+ruff>=0.8
