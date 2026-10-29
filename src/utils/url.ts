@@ -6,10 +6,10 @@ export function withBase(path = ""): string {
   return `${base}${path.replace(/^\/+/, "")}`;
 }
 
-export function homePath(lang: "en" | "es"): string {
+export function docsPath(lang: "en" | "es"): string {
   return lang === "es" ? withBase("es/") : withBase("");
 }
 
-export function docsPath(lang: "en" | "es"): string {
-  return lang === "es" ? withBase("es/docs/") : withBase("docs/");
+export function homePath(lang: "en" | "es"): string {
+  return lang === "es" ? withBase("es/home/") : withBase("home/");
 }

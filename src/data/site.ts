@@ -10,14 +10,14 @@ export const navLabels: Record<
   { home: string; docs: string; cli: string; api: string; github: string }
 > = {
   en: {
-    home: "Home",
+    home: "Overview",
     docs: "Docs",
     cli: "CLI",
     api: "API",
     github: "GitHub",
   },
   es: {
-    home: "Inicio",
+    home: "Resumen",
     docs: "Documentación",
     cli: "CLI",
     api: "API",

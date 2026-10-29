@@ -2,8 +2,11 @@
 
 Astro source for the gdrive-dl documentation site.
 
-- Live site: https://lococoi.github.io/gdrive-dl/
+- Live docs: https://lococoi.github.io/gdrive-dl/
+- Live overview: https://lococoi.github.io/gdrive-dl/home/
 - Main project: https://github.com/lococoi/gdrive-dl
+
+The documentation lives at the site root. The product overview remains available at `/home/`.
 
 ## Local development
 
@@ -17,6 +20,7 @@ The site is served under `/gdrive-dl/` because it is a GitHub Pages project site
 ## Build
 
 ```bash
+npm run check
 npm run build
 npm run preview
 ```
@@ -32,12 +36,12 @@ The site includes light and dark themes, English and Spanish documentation, a do
 ```text
 src/
   pages/
-    index.astro          English home
-    es/index.astro       Spanish home
-    docs/index.astro     English documentation
-    es/docs/index.astro  Spanish documentation
-  layouts/               Base and docs layouts
-  components/            Header, footer, icons, code blocks, callouts
-  data/site.ts           Navigation and localized labels
-  styles/global.css      Design system and responsive layout
+    index.astro            English documentation at /
+    es/index.astro         Spanish documentation at /es/
+    home/index.astro       English overview at /home/
+    es/home/index.astro    Spanish overview at /es/home/
+  layouts/                 Base and docs layouts
+  components/              Header, footer, logo, icons, code blocks, callouts
+  data/site.ts             Navigation and localized labels
+  styles/global.css        Design system and responsive layout
 ```

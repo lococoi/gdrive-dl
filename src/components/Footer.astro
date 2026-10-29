@@ -1,7 +1,7 @@
 ---
 import Logo from "./Logo.astro";
 import Icon from "./Icon.astro";
-import { docsPath, homePath } from "../utils/url";
+import { docsPath } from "../utils/url";
 import {
   footerLabels,
   issuesUrl,
@@ -24,7 +24,7 @@ const year = new Date().getFullYear();
   <div class="container-wide">
     <div class="footer-inner">
       <div class="footer-brand">
-        <a class="brand" href={homePath(lang)} aria-label="gdrive-dl">
+        <a class="brand" href={docs} aria-label="gdrive-dl">
           <Logo class="brand-mark" size={34} />
           <span class="brand-text">
             <span class="brand-name">gdrive-dl</span>

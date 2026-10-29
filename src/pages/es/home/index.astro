@@ -1,0 +1,255 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import Icon from "../../../components/Icon.astro";
+import FeatureCard from "../../../components/FeatureCard.astro";
+import CodeBlock from "../../../components/CodeBlock.astro";
+import { docsPath, homePath } from "../../../utils/url";
+import { repoUrl, releasesUrl } from "../../../data/site";
+
+const lang = "es" as const;
+const docs = docsPath(lang);
+const altHref = homePath("en");
+
+const quickstart = `python -m pip install -e ".[api]"
+
+python gdrive-dl.py login
+python gdrive-dl.py status
+python gdrive-dl.py download "https://drive.google.com/file/d/<FILE_ID>/view"`;
+
+const apiSample = `curl -X POST http://127.0.0.1:8000/download \\
+  -H "Content-Type: application/json" \\
+  -d '{"url":"https://drive.google.com/file/d/<FILE_ID>/view"}'
+
+{
+  "success": true,
+  "status": "downloaded",
+  "output_path": "downloads/video.mp4",
+  "attempts": 1,
+  "duration_seconds": 12.4
+}`;
+
+const features = [
+  {
+    icon: "shield",
+    title: "Sesión de Chrome aislada",
+    body: "Un --user-data-dir dedicado mantiene intacto tu navegador diario y sus cookies.",
+  },
+  {
+    icon: "layers",
+    title: "Verificación real de sesión",
+    body: "Los nombres de cookies se leen de SQLite en modo solo lectura antes de cada descarga.",
+  },
+  {
+    icon: "zap",
+    title: "Descargas resilientes",
+    body: "Timeouts, reintentos con backoff, concurrencia acotada y limpieza del árbol de procesos.",
+  },
+  {
+    icon: "lock",
+    title: "Seguro por defecto",
+    body: "Solo HTTPS, allowlist de Google Drive, sin shell y con terminador -- antes de la URL.",
+  },
+  {
+    icon: "terminal",
+    title: "CLI y API HTTP",
+    body: "Un motor tipado, dos interfaces. Automatiza con la CLI o conecta un servicio local.",
+  },
+  {
+    icon: "package",
+    title: "Build Windows autocontenido",
+    body: "Un EXE único con Python, FastAPI y el paquete más reciente de yt-dlp embebido.",
+  },
+];
+
+const docsCards = [
+  { icon: "play", title: "Inicio rápido", body: "Instala, autentica y descarga tu primer archivo.", href: `${docs}#quickstart` },
+  { icon: "terminal", title: "Referencia CLI", body: "Comandos, flags, variables de entorno y códigos de salida.", href: `${docs}#cli` },
+  { icon: "server", title: "API HTTP", body: "Endpoints, bearer auth, ejemplos de request y errores.", href: `${docs}#api` },
+  { icon: "layers", title: "Arquitectura", body: "Puertos, adaptadores, servicios y composition root.", href: `${docs}#architecture` },
+  { icon: "shield", title: "Seguridad", body: "Modelo de amenazas, cookies, política de hosts y límites.", href: `${docs}#security` },
+  { icon: "wrench", title: "Build y release", body: "PyInstaller, CI, tags y el ejecutable autocontenido.", href: `${docs}#build` },
+];
+---
+
+<BaseLayout
+  title="gdrive-dl · Descargas privadas de Google Drive"
+  description="Descarga archivos privados de Google Drive con una sesión aislada de Chrome, una CLI resiliente, un servidor FastAPI y un ejecutable Windows autocontenido."
+  lang={lang}
+  altHref={altHref}
+>
+  <section class="hero">
+    <div class="container hero-inner">
+      <span class="badge"><span class="badge-dot"></span>v1.0.4 · Apache-2.0</span>
+      <h1>Descarga Google Drive <span class="gradient-text">sin fricción.</span></h1>
+      <p class="hero-copy">
+        Los archivos privados necesitan más que una petición HTTP. gdrive-dl aísla la sesión
+        de Chrome, verifica las cookies de Google y envuelve yt-dlp con timeouts, reintentos
+        y valores seguros por defecto.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href={`${docs}#quickstart`}>
+          Empezar <Icon name="arrow-right" size={17} />
+        </a>
+        <a class="btn btn-ghost" href={repoUrl} target="_blank" rel="noreferrer">
+          <Icon name="github" size={17} /> Ver en GitHub
+        </a>
+      </div>
+      <div class="hero-meta">
+        <span>Perfil de Chrome</span>
+        <span>yt-dlp</span>
+        <span>FastAPI</span>
+        <span>PyInstaller</span>
+        <span>65 tests</span>
+      </div>
+
+      <div class="terminal" data-reveal>
+        <div class="terminal-bar">
+          <span class="terminal-dot"></span>
+          <span class="terminal-dot"></span>
+          <span class="terminal-dot"></span>
+          <span class="terminal-title">gdrive-dl — inicio rápido</span>
+        </div>
+        <div class="terminal-body">
+          <div class="terminal-line"><span class="prompt">$</span> python gdrive-dl.py login</div>
+          <div class="terminal-line"><span class="dim">abriendo el perfil aislado de Chrome…</span></div>
+          <div class="terminal-line"><span class="ok">ok</span> sesión de Google verificada · 9 cookies</div>
+          <div class="terminal-line"><span class="prompt">$</span> python gdrive-dl.py download "https://drive.google.com/file/d/…/view"</div>
+          <div class="terminal-line"><span class="ok">ok</span> video.mp4 · 42.8 MiB · 1 intento · 12.4s</div>
+          <div class="terminal-line"><span class="prompt">$</span> <span class="terminal-cursor"></span></div>
+        </div>
+      </div>
+
+      <div class="stats-strip" data-reveal>
+        <div class="stat"><div class="stat-value">0</div><div class="stat-label">saltos por la nube</div></div>
+        <div class="stat"><div class="stat-value">65</div><div class="stat-label">tests automatizados</div></div>
+        <div class="stat"><div class="stat-value">2</div><div class="stat-label">interfaces: CLI + API</div></div>
+        <div class="stat"><div class="stat-value">1</div><div class="stat-label">EXE portable para Windows</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <div class="eyebrow">Por qué gdrive-dl</div>
+        <h2>Diseñado alrededor de la sesión, no de un hack.</h2>
+        <p>
+          Las descargas privadas de Drive fallan cuando el navegador y el descargador no
+          comparten el mismo contrato. gdrive-dl hace ese límite explícito, testeable y observable.
+        </p>
+      </div>
+      <div class="feature-grid">
+        {features.map((feature) => <FeatureCard {...feature} />)}
+      </div>
+    </div>
+  </section>
+
+  <section class="section-tight">
+    <div class="container">
+      <div class="section-head">
+        <div class="eyebrow">Flujo</div>
+        <h2>Cuatro pasos, sin misterio.</h2>
+      </div>
+      <div class="steps">
+        <article class="step" data-reveal>
+          <div class="step-number">01</div>
+          <h3>Autentica</h3>
+          <p>Chrome se abre con un perfil dedicado. Inicia sesión y cierra todas las ventanas.</p>
+        </article>
+        <article class="step" data-reveal>
+          <div class="step-number">02</div>
+          <h3>Verifica</h3>
+          <p>La base de cookies se inspecciona en solo lectura y la sesión queda confirmada.</p>
+        </article>
+        <article class="step" data-reveal>
+          <div class="step-number">03</div>
+          <h3>Descarga</h3>
+          <p>yt-dlp usa el perfil aislado, un timeout, reintentos y una ruta de salida segura.</p>
+        </article>
+        <article class="step" data-reveal>
+          <div class="step-number">04</div>
+          <h3>Observa</h3>
+          <p>Estado, diagnóstico, logs y errores tipados te dicen exactamente qué pasó.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <div class="eyebrow">Documentación</div>
+        <h2>Todo está escrito.</h2>
+        <p>Comandos cortos, contratos explícitos y los modos de fallo que importan.</p>
+      </div>
+      <div class="doc-grid">
+        {docsCards.map((card) => (
+          <a class="doc-card" href={card.href} data-reveal>
+            <span class="icon"><Icon name={card.icon} size={20} /></span>
+            <h3>{card.title}</h3>
+            <p>{card.body}</p>
+            <span class="arrow">Leer sección <Icon name="arrow-right" size={12} /></span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container split">
+      <div>
+        <div class="eyebrow">CLI</div>
+        <h2>Un comando. Sin supervisión.</h2>
+        <p>
+          Inicia sesión una vez, verifica la sesión y descarga. Cada comando se puede automatizar
+          y cada fallo tiene un código de salida tipado.
+        </p>
+        <ul class="check-list">
+          <li><Icon name="check" size={17} /> Descargas reanudables con --continue y --no-overwrites.</li>
+          <li><Icon name="check" size={17} /> Nombres seguros para Windows y carpeta de salida dedicada.</li>
+          <li><Icon name="check" size={17} /> Comandos status y doctor con salida JSON opcional.</li>
+        </ul>
+        <div class="hero-actions" style="justify-content:flex-start">
+          <a class="btn btn-ghost" href={`${docs}#cli`}>Referencia CLI <Icon name="arrow-right" size={16} /></a>
+        </div>
+      </div>
+      <CodeBlock title="Inicio rápido" code={quickstart} lang="bash" />
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container split reverse">
+      <CodeBlock title="API HTTP" code={apiSample} lang="bash" />
+      <div>
+        <div class="eyebrow">API HTTP</div>
+        <h2>El mismo motor, detrás de un servicio local.</h2>
+        <p>
+          Inicia un servidor FastAPI, protégelo con un bearer token y conecta cualquier cliente.
+          El servidor escucha en localhost por defecto y exige token fuera del loopback.
+        </p>
+        <div class="api-grid">
+          <div class="api-card"><span class="method">GET</span><code>/status</code><p>Estado de sesión y herramientas.</p></div>
+          <div class="api-card"><span class="method">POST</span><code>/download</code><p>Descarga una URL validada.</p></div>
+          <div class="api-card"><span class="method">GET</span><code>/healthz</code><p>Comprobación de vida.</p></div>
+        </div>
+        <div class="hero-actions" style="justify-content:flex-start">
+          <a class="btn btn-ghost" href={`${docs}#api`}>Referencia API <Icon name="arrow-right" size={16} /></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="cta" data-reveal>
+        <div class="eyebrow">Listo</div>
+        <h2>Tus archivos de Drive, sin el baile del navegador.</h2>
+        <p>Clona el repositorio, autentica una vez y descarga desde la CLI, la API o el ejecutable.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href={`${docs}#quickstart`}>Leer el inicio rápido <Icon name="arrow-right" size={16} /></a>
+          <a class="btn btn-ghost" href={releasesUrl} target="_blank" rel="noreferrer"><Icon name="download" size={16} /> Releases</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

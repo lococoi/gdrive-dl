@@ -1,255 +1,303 @@
 ---
-import BaseLayout from "../../layouts/BaseLayout.astro";
-import Icon from "../../components/Icon.astro";
-import FeatureCard from "../../components/FeatureCard.astro";
+import DocsLayout from "../../layouts/DocsLayout.astro";
 import CodeBlock from "../../components/CodeBlock.astro";
-import { docsPath, homePath } from "../../utils/url";
-import { repoUrl, releasesUrl } from "../../data/site";
+import Callout from "../../components/Callout.astro";
+import { docsPath } from "../../utils/url";
 
 const lang = "es" as const;
-const docs = docsPath(lang);
-const altHref = homePath("en");
+const altHref = docsPath("en");
 
-const quickstart = `python -m pip install -e ".[api]"
+const install = `git clone https://github.com/lococoi/gdrive-dl.git
+cd gdrive-dl
+python -m venv .venv
+.venv\\Scripts\\Activate.ps1
+python -m pip install -e ".[api]"`;
 
-python gdrive-dl.py login
+const firstRun = `python gdrive-dl.py login
 python gdrive-dl.py status
+python gdrive-dl.py doctor
 python gdrive-dl.py download "https://drive.google.com/file/d/<FILE_ID>/view"`;
 
-const apiSample = `curl -X POST http://127.0.0.1:8000/download \\
+const server = `python gdrive-dl.py api --host 127.0.0.1 --port 8000
+
+# Token opcional para hosts que no son locales
+$env:GDRIVE_API_TOKEN = "al-menos-16-caracteres-aleatorios"
+python gdrive-dl.py api --host 0.0.0.0 --port 8000`;
+
+const curl = `curl http://127.0.0.1:8000/status
+
+curl -X POST http://127.0.0.1:8000/download \\
   -H "Content-Type: application/json" \\
-  -d '{"url":"https://drive.google.com/file/d/<FILE_ID>/view"}'
+  -d '{"url":"https://drive.google.com/file/d/<FILE_ID>/view"}'`;
 
-{
-  "success": true,
-  "status": "downloaded",
-  "output_path": "downloads/video.mp4",
-  "attempts": 1,
-  "duration_seconds": 12.4
-}`;
+const tree = `gdrive_dl/
+  errors.py          jerarquía de errores tipados
+  models.py          value objects inmutables
+  ports.py           puertos abstractos
+  config.py          configuración inmutable
+  services.py        login, descarga, estado y doctor
+  container.py       composition root
+  cli.py             comandos como objetos y exit codes
+  api.py             fábrica FastAPI y mapeo HTTP
+  infrastructure/
+    chrome.py        localizador, inspector de cookies
+    process.py       runner de subprocesos y limpieza
+    yt_dlp.py        descargador y sanitizador de errores
+tests/               tests unitarios y de API`;
 
-const features = [
-  {
-    icon: "shield",
-    title: "Sesión de Chrome aislada",
-    body: "Un --user-data-dir dedicado mantiene intacto tu navegador diario y sus cookies.",
-  },
-  {
-    icon: "layers",
-    title: "Verificación real de sesión",
-    body: "Los nombres de cookies se leen de SQLite en modo solo lectura antes de cada descarga.",
-  },
-  {
-    icon: "zap",
-    title: "Descargas resilientes",
-    body: "Timeouts, reintentos con backoff, concurrencia acotada y limpieza del árbol de procesos.",
-  },
-  {
-    icon: "lock",
-    title: "Seguro por defecto",
-    body: "Solo HTTPS, allowlist de Google Drive, sin shell y con terminador -- antes de la URL.",
-  },
-  {
-    icon: "terminal",
-    title: "CLI y API HTTP",
-    body: "Un motor tipado, dos interfaces. Automatiza con la CLI o conecta un servicio local.",
-  },
-  {
-    icon: "package",
-    title: "Build Windows autocontenido",
-    body: "Un EXE único con Python, FastAPI y el paquete más reciente de yt-dlp embebido.",
-  },
-];
-
-const docsCards = [
-  { icon: "play", title: "Inicio rápido", body: "Instala, autentica y descarga tu primer archivo.", href: `${docs}#quickstart` },
-  { icon: "terminal", title: "Referencia CLI", body: "Comandos, flags, variables de entorno y códigos de salida.", href: `${docs}#cli` },
-  { icon: "server", title: "API HTTP", body: "Endpoints, bearer auth, ejemplos de request y errores.", href: `${docs}#api` },
-  { icon: "layers", title: "Arquitectura", body: "Puertos, adaptadores, servicios y composition root.", href: `${docs}#architecture` },
-  { icon: "shield", title: "Seguridad", body: "Modelo de amenazas, cookies, política de hosts y límites.", href: `${docs}#security` },
-  { icon: "wrench", title: "Build y release", body: "PyInstaller, CI, tags y el ejecutable autocontenido.", href: `${docs}#build` },
-];
+const build = `python -m pip install -r requirements-dev.txt
+python scripts/build_exe.py
+.\\dist\\gdrive-dl.exe --version`;
 ---
 
-<BaseLayout
-  title="gdrive-dl · Descargas privadas de Google Drive"
-  description="Descarga archivos privados de Google Drive con una sesión aislada de Chrome, una CLI resiliente, un servidor FastAPI y un ejecutable Windows autocontenido."
+<DocsLayout
+  title="Documentación"
+  description="Instala gdrive-dl, autentica un perfil aislado de Chrome, descarga archivos desde la CLI, ejecuta la API HTTP y compila el ejecutable Windows autocontenido."
   lang={lang}
   altHref={altHref}
+  editHref="https://github.com/lococoi/gdrive-dl/blob/gh-pages/src/pages/es/index.astro"
 >
-  <section class="hero">
-    <div class="container hero-inner">
-      <span class="badge"><span class="badge-dot"></span>v1.0.4 · Apache-2.0</span>
-      <h1>Descarga Google Drive <span class="gradient-text">sin fricción.</span></h1>
-      <p class="hero-copy">
-        Los archivos privados necesitan más que una petición HTTP. gdrive-dl aísla la sesión
-        de Chrome, verifica las cookies de Google y envuelve yt-dlp con timeouts, reintentos
-        y valores seguros por defecto.
-      </p>
-      <div class="hero-actions">
-        <a class="btn btn-primary" href={`${docs}#quickstart`}>
-          Empezar <Icon name="arrow-right" size={17} />
-        </a>
-        <a class="btn btn-ghost" href={repoUrl} target="_blank" rel="noreferrer">
-          <Icon name="github" size={17} /> Ver en GitHub
-        </a>
-      </div>
-      <div class="hero-meta">
-        <span>Perfil de Chrome</span>
-        <span>yt-dlp</span>
-        <span>FastAPI</span>
-        <span>PyInstaller</span>
-        <span>65 tests</span>
-      </div>
-
-      <div class="terminal" data-reveal>
-        <div class="terminal-bar">
-          <span class="terminal-dot"></span>
-          <span class="terminal-dot"></span>
-          <span class="terminal-dot"></span>
-          <span class="terminal-title">gdrive-dl — inicio rápido</span>
-        </div>
-        <div class="terminal-body">
-          <div class="terminal-line"><span class="prompt">$</span> python gdrive-dl.py login</div>
-          <div class="terminal-line"><span class="dim">abriendo el perfil aislado de Chrome…</span></div>
-          <div class="terminal-line"><span class="ok">ok</span> sesión de Google verificada · 9 cookies</div>
-          <div class="terminal-line"><span class="prompt">$</span> python gdrive-dl.py download "https://drive.google.com/file/d/…/view"</div>
-          <div class="terminal-line"><span class="ok">ok</span> video.mp4 · 42.8 MiB · 1 intento · 12.4s</div>
-          <div class="terminal-line"><span class="prompt">$</span> <span class="terminal-cursor"></span></div>
-        </div>
-      </div>
-
-      <div class="stats-strip" data-reveal>
-        <div class="stat"><div class="stat-value">0</div><div class="stat-label">saltos por la nube</div></div>
-        <div class="stat"><div class="stat-value">65</div><div class="stat-label">tests automatizados</div></div>
-        <div class="stat"><div class="stat-value">2</div><div class="stat-label">interfaces: CLI + API</div></div>
-        <div class="stat"><div class="stat-value">1</div><div class="stat-label">EXE portable para Windows</div></div>
-      </div>
-    </div>
+  <section id="quickstart">
+    <h2>Inicio rápido</h2>
+    <p>
+      gdrive-dl necesita Python 3.11+, Google Chrome y acceso a Google Drive. La instalación
+      de abajo incluye las dependencias opcionales de la API.
+    </p>
+    <h3>Instalar desde el código fuente</h3>
+    <CodeBlock title="PowerShell" code={install} lang="powershell" />
+    <p>
+      La CLI funciona sin el extra de API. Usa <code>pip install -e .</code> si solo necesitas
+      la línea de comandos. El comando <code>api</code> requiere FastAPI, Uvicorn y Pydantic.
+    </p>
+    <h3>Autenticar y descargar</h3>
+    <CodeBlock title="Primer uso" code={firstRun} lang="bash" />
+    <p>
+      <code>login</code> abre Chrome con un <code>--user-data-dir</code> dedicado. Inicia
+      sesión y cierra todas las ventanas de Chrome al terminar. El perfil queda en
+      <code>chrome_profile/</code> y está ignorado por Git.
+    </p>
+    <Callout type="tip" title="Verifica antes de descargar.">
+      <code>status</code> lee nombres de cookies de autenticación de Google desde SQLite en
+      modo solo lectura. <code>doctor</code> comprueba Python, Chrome, yt-dlp, la sesión,
+      permisos de salida y espacio libre.
+    </Callout>
+    <h3>Salida de las descargas</h3>
+    <p>
+      Los archivos se escriben en <code>downloads/</code> por defecto. La plantilla usa el
+      título y el ID del archivo, y se fuerzan nombres seguros para Windows. Los archivos
+      existentes no se sobrescriben; los parciales se pueden reanudar.
+    </p>
   </section>
 
-  <section class="section">
-    <div class="container">
-      <div class="section-head">
-        <div class="eyebrow">Por qué gdrive-dl</div>
-        <h2>Diseñado alrededor de la sesión, no de un hack.</h2>
-        <p>
-          Las descargas privadas de Drive fallan cuando el navegador y el descargador no
-          comparten el mismo contrato. gdrive-dl hace ese límite explícito, testeable y observable.
-        </p>
-      </div>
-      <div class="feature-grid">
-        {features.map((feature) => <FeatureCard {...feature} />)}
-      </div>
-    </div>
+  <section id="cli">
+    <h2>Referencia CLI</h2>
+    <p>Las opciones globales van antes del comando.</p>
+    <table>
+      <thead><tr><th>Comando</th><th>Propósito</th></tr></thead>
+      <tbody>
+        <tr><td>login</td><td>Abre Chrome, autentica y verifica la sesión.</td></tr>
+        <tr><td>download URL</td><td>Descarga un archivo de Google Drive con la sesión guardada.</td></tr>
+        <tr><td>status</td><td>Muestra estado de sesión, cookies, perfil y versión de yt-dlp.</td></tr>
+        <tr><td>doctor</td><td>Ejecuta diagnósticos de entorno y configuración.</td></tr>
+        <tr><td>api</td><td>Inicia el servidor FastAPI local.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Opciones</h3>
+    <table>
+      <thead><tr><th>Opción</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td>--output-dir PATH</td><td>Destino de descargas. Por defecto <code>downloads/</code>.</td></tr>
+        <tr><td>--timeout SECONDS</td><td>Timeout de login o descarga, según el comando.</td></tr>
+        <tr><td>--retries N</td><td>Intentos adicionales para fallos transitorios (0-5).</td></tr>
+        <tr><td>--allow-any-host</td><td>Permite hosts públicos fuera de la allowlist de Drive.</td></tr>
+        <tr><td>--profile-dir PATH</td><td>Cambia el directorio del perfil de Chrome.</td></tr>
+        <tr><td>--json</td><td>Salida legible por máquina para <code>status</code> y <code>doctor</code>.</td></tr>
+        <tr><td>-v, --verbose</td><td>Activa logs de depuración.</td></tr>
+        <tr><td>--log-level LEVEL</td><td>DEBUG, INFO, WARNING, ERROR o CRITICAL.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Entorno</h3>
+    <table>
+      <thead><tr><th>Variable</th><th>Valor por defecto</th></tr></thead>
+      <tbody>
+        <tr><td>GDRIVE_PROFILE_DIR</td><td><code>./chrome_profile</code></td></tr>
+        <tr><td>GDRIVE_OUTPUT_DIR</td><td><code>./downloads</code></td></tr>
+        <tr><td>GDRIVE_YTDLP</td><td>Binario o comando autodetectado</td></tr>
+        <tr><td>GDRIVE_CHROME</td><td>Ejecutable de Chrome autodetectado</td></tr>
+        <tr><td>GDRIVE_LOGIN_TIMEOUT</td><td><code>900</code> segundos</td></tr>
+        <tr><td>GDRIVE_DOWNLOAD_TIMEOUT</td><td><code>3600</code> segundos</td></tr>
+        <tr><td>GDRIVE_RETRIES</td><td><code>2</code></td></tr>
+        <tr><td>GDRIVE_MAX_CONCURRENT</td><td><code>2</code> (API)</td></tr>
+        <tr><td>GDRIVE_ALLOWED_HOSTS</td><td>Hosts de Google Drive</td></tr>
+        <tr><td>GDRIVE_ALLOW_ANY_HOST</td><td><code>false</code></td></tr>
+        <tr><td>GDRIVE_API_TOKEN</td><td>Sin valor</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Códigos de salida</h3>
+    <table>
+      <thead><tr><th>Código</th><th>Significado</th></tr></thead>
+      <tbody>
+        <tr><td>0</td><td>Éxito.</td></tr>
+        <tr><td>2</td><td>Uso incorrecto o URL inválida.</td></tr>
+        <tr><td>3</td><td>Error de configuración.</td></tr>
+        <tr><td>4</td><td>Error de sesión o login.</td></tr>
+        <tr><td>5</td><td>Fallo de descarga o proceso.</td></tr>
+        <tr><td>6</td><td>Dependencia o herramienta faltante.</td></tr>
+        <tr><td>130</td><td>Interrumpido por el usuario.</td></tr>
+      </tbody>
+    </table>
   </section>
 
-  <section class="section-tight">
-    <div class="container">
-      <div class="section-head">
-        <div class="eyebrow">Flujo</div>
-        <h2>Cuatro pasos, sin misterio.</h2>
-      </div>
-      <div class="steps">
-        <article class="step" data-reveal>
-          <div class="step-number">01</div>
-          <h3>Autentica</h3>
-          <p>Chrome se abre con un perfil dedicado. Inicia sesión y cierra todas las ventanas.</p>
-        </article>
-        <article class="step" data-reveal>
-          <div class="step-number">02</div>
-          <h3>Verifica</h3>
-          <p>La base de cookies se inspecciona en solo lectura y la sesión queda confirmada.</p>
-        </article>
-        <article class="step" data-reveal>
-          <div class="step-number">03</div>
-          <h3>Descarga</h3>
-          <p>yt-dlp usa el perfil aislado, un timeout, reintentos y una ruta de salida segura.</p>
-        </article>
-        <article class="step" data-reveal>
-          <div class="step-number">04</div>
-          <h3>Observa</h3>
-          <p>Estado, diagnóstico, logs y errores tipados te dicen exactamente qué pasó.</p>
-        </article>
-      </div>
-    </div>
+  <section id="api">
+    <h2>API HTTP</h2>
+    <p>
+      La API expone los mismos servicios que la CLI. Escucha en <code>127.0.0.1</code> por
+      defecto. Si la expones en una interfaz no local, se exige un bearer token de al menos
+      16 caracteres.
+    </p>
+    <CodeBlock title="Iniciar el servidor" code={server} lang="powershell" />
+    <table>
+      <thead><tr><th>Método</th><th>Ruta</th><th>Auth</th><th>Propósito</th></tr></thead>
+      <tbody>
+        <tr><td>GET</td><td><code>/healthz</code></td><td>No</td><td>Comprobación de vida.</td></tr>
+        <tr><td>GET</td><td><code>/status</code></td><td>Opcional</td><td>Estado de sesión y herramientas.</td></tr>
+        <tr><td>POST</td><td><code>/download</code></td><td>Opcional</td><td>Descarga una URL validada.</td></tr>
+      </tbody>
+    </table>
+    <CodeBlock title="Peticiones" code={curl} lang="bash" />
+    <h3>Autenticación</h3>
+    <p>
+      Cuando <code>GDRIVE_API_TOKEN</code> está definido, envía
+      <code>Authorization: Bearer &lt;token&gt;</code>. Los tokens se comparan en tiempo
+      constante y nunca se escriben en logs.
+    </p>
+    <h3>Mapeo de errores</h3>
+    <table>
+      <thead><tr><th>Estado</th><th>Significado</th></tr></thead>
+      <tbody>
+        <tr><td>400</td><td>URL inválida o no soportada.</td></tr>
+        <tr><td>401</td><td>Token ausente o inválido.</td></tr>
+        <tr><td>409</td><td>No hay una sesión válida de Google.</td></tr>
+        <tr><td>429</td><td>Límite de concurrencia alcanzado.</td></tr>
+        <tr><td>502</td><td>yt-dlp informó un fallo de descarga.</td></tr>
+        <tr><td>503</td><td>Herramienta o dependencia no disponible.</td></tr>
+        <tr><td>504</td><td>Timeout de descarga.</td></tr>
+      </tbody>
+    </table>
+    <Callout type="note" title="Contrato síncrono.">
+      <code>/download</code> responde cuando la descarga termina. Usa un timeout de cliente
+      mayor que <code>GDRIVE_DOWNLOAD_TIMEOUT</code> o varios clientes dentro del límite de
+      concurrencia.
+    </Callout>
   </section>
 
-  <section class="section">
-    <div class="container">
-      <div class="section-head">
-        <div class="eyebrow">Documentación</div>
-        <h2>Todo está escrito.</h2>
-        <p>Comandos cortos, contratos explícitos y los modos de fallo que importan.</p>
-      </div>
-      <div class="doc-grid">
-        {docsCards.map((card) => (
-          <a class="doc-card" href={card.href} data-reveal>
-            <span class="icon"><Icon name={card.icon} size={20} /></span>
-            <h3>{card.title}</h3>
-            <p>{card.body}</p>
-            <span class="arrow">Leer sección <Icon name="arrow-right" size={12} /></span>
-          </a>
-        ))}
-      </div>
-    </div>
+  <section id="architecture">
+    <h2>Arquitectura</h2>
+    <p>
+      El núcleo es una arquitectura OOP estricta por capas. Los value objects son inmutables,
+      los puertos definen los límites de infraestructura y el composition root es el único
+      lugar que selecciona implementaciones concretas.
+    </p>
+    <h3>Capas</h3>
+    <ul>
+      <li><strong>Dominio:</strong> value objects inmutables, tipos de resultado y excepciones tipadas.</li>
+      <li><strong>Puertos:</strong> repositorio de sesión, autenticador, descargador, runner de procesos, sleeper, progreso y preparador de directorios.</li>
+      <li><strong>Servicios de aplicación:</strong> casos de uso de login, descarga, estado y doctor.</li>
+      <li><strong>Infraestructura:</strong> adaptadores de Chrome, SQLite, subprocesos, filesystem, logging y yt-dlp.</li>
+      <li><strong>Interfaces:</strong> comandos CLI como objetos y fábrica de aplicación FastAPI.</li>
+    </ul>
+    <h3>Estructura del código</h3>
+    <CodeBlock title="Árbol del proyecto" code={tree} lang="text" />
+    <h3>Flujo de descarga</h3>
+    <ol>
+      <li>Validar la URL: HTTPS, política de hosts, credenciales, puerto e inyección de opciones.</li>
+      <li>Inspeccionar cookies de Chrome en SQLite de solo lectura y contar las de autenticación.</li>
+      <li>Preparar la carpeta de salida y adquirir el semáforo de concurrencia.</li>
+      <li>Ejecutar yt-dlp con la ruta absoluta del perfil, timeout y política de reintentos.</li>
+      <li>Clasificar fallos en excepciones tipadas y sanear la salida de error.</li>
+      <li>Devolver un resultado con estado, intentos, duración y ruta de salida.</li>
+    </ol>
+    <Callout type="tip" title="Testeable por construcción.">
+      El núcleo se puede probar sin Chrome, sin red y sin yt-dlp. Los adaptadores de navegador
+      y descargador se inyectan mediante puertos.
+    </Callout>
   </section>
 
-  <section class="section">
-    <div class="container split">
-      <div>
-        <div class="eyebrow">CLI</div>
-        <h2>Un comando. Sin supervisión.</h2>
-        <p>
-          Inicia sesión una vez, verifica la sesión y descarga. Cada comando se puede automatizar
-          y cada fallo tiene un código de salida tipado.
-        </p>
-        <ul class="check-list">
-          <li><Icon name="check" size={17} /> Descargas reanudables con --continue y --no-overwrites.</li>
-          <li><Icon name="check" size={17} /> Nombres seguros para Windows y carpeta de salida dedicada.</li>
-          <li><Icon name="check" size={17} /> Comandos status y doctor con salida JSON opcional.</li>
-        </ul>
-        <div class="hero-actions" style="justify-content:flex-start">
-          <a class="btn btn-ghost" href={`${docs}#cli`}>Referencia CLI <Icon name="arrow-right" size={16} /></a>
-        </div>
-      </div>
-      <CodeBlock title="Inicio rápido" code={quickstart} lang="bash" />
-    </div>
+  <section id="security">
+    <h2>Seguridad</h2>
+    <p>
+      El perfil de Chrome contiene cookies de sesión sensibles. Trata
+      <code>chrome_profile/</code>, <code>downloads/</code> y <code>logs/</code> como datos
+      privados. Están excluidos del control de versiones.
+    </p>
+    <ul>
+      <li>El estado de sesión lee solo nombres de cookies, en modo solo lectura. Nunca imprime valores.</li>
+      <li>Las URLs deben usar HTTPS. Se rechazan credenciales, IPs privadas, localhost, puertos no estándar y carpetas de Drive.</li>
+      <li>Los comandos externos se ejecutan sin shell; un terminador <code>--</code> evita inyección de opciones.</li>
+      <li>Los mensajes de error se sanean y las query strings de las URLs se redactan.</li>
+      <li>La API escucha en loopback por defecto y exige bearer token en otras interfaces.</li>
+      <li>Las descargas tienen timeout, concurrencia acotada, reintentos y limpieza del árbol de procesos.</li>
+    </ul>
+    <h3>Limitaciones</h3>
+    <ul>
+      <li>Chrome es obligatorio. gdrive-dl no gestiona contraseñas ni evita los desafíos de Google.</li>
+      <li>Chrome 127+ puede usar cifrado de cookies vinculado a la aplicación. Si yt-dlp no puede descifrar el perfil, usa un navegador/perfil compatible o exporta cookies.</li>
+      <li>La API está pensada para uso local o en una red de confianza, no como servicio público multiinquilino.</li>
+      <li><code>--allow-any-host</code> permite otros sitios públicos, pero sigue rechazando IPs privadas y hosts locales.</li>
+    </ul>
   </section>
 
-  <section class="section">
-    <div class="container split reverse">
-      <CodeBlock title="API HTTP" code={apiSample} lang="bash" />
-      <div>
-        <div class="eyebrow">API HTTP</div>
-        <h2>El mismo motor, detrás de un servicio local.</h2>
-        <p>
-          Inicia un servidor FastAPI, protégelo con un bearer token y conecta cualquier cliente.
-          El servidor escucha en localhost por defecto y exige token fuera del loopback.
-        </p>
-        <div class="api-grid">
-          <div class="api-card"><span class="method">GET</span><code>/status</code><p>Estado de sesión y herramientas.</p></div>
-          <div class="api-card"><span class="method">POST</span><code>/download</code><p>Descarga una URL validada.</p></div>
-          <div class="api-card"><span class="method">GET</span><code>/healthz</code><p>Comprobación de vida.</p></div>
-        </div>
-        <div class="hero-actions" style="justify-content:flex-start">
-          <a class="btn btn-ghost" href={`${docs}#api`}>Referencia API <Icon name="arrow-right" size={16} /></a>
-        </div>
-      </div>
-    </div>
+  <section id="build">
+    <h2>Build y release</h2>
+    <p>
+      El ejecutable Windows se compila con PyInstaller en modo one-file. Incluye Python,
+      FastAPI, Uvicorn, Pydantic y el paquete más reciente de yt-dlp. Sigue necesitando Google
+      Chrome para autenticarse.
+    </p>
+    <CodeBlock title="Build local" code={build} lang="powershell" />
+    <p>
+      El script instala la última release de yt-dlp desde PyPI y ejecuta PyInstaller con
+      <code>gdrive-dl.spec</code>. El ejecutable queda en <code>dist/gdrive-dl.exe</code>.
+    </p>
+    <h3>CI y releases</h3>
+    <ul>
+      <li>Los tests corren en Ubuntu y Windows con Python 3.12.</li>
+      <li>Ruff y mypy validan el código antes del build.</li>
+      <li>El build de Windows se prueba con <code>--version</code> y <code>status --json</code>.</li>
+      <li>Los tags <code>v*</code> publican el ejecutable en GitHub Releases.</li>
+    </ul>
+    <Callout type="note" title="Conjunto slim de extractores.">
+      El ejecutable incluye los extractores de Google Drive, genéricos y comunes para mantener
+      el binario pequeño. Ejecuta desde el código fuente con el paquete completo para otros
+      proveedores.
+    </Callout>
   </section>
 
-  <section class="section">
-    <div class="container">
-      <div class="cta" data-reveal>
-        <div class="eyebrow">Listo</div>
-        <h2>Tus archivos de Drive, sin el baile del navegador.</h2>
-        <p>Clona el repositorio, autentica una vez y descarga desde la CLI, la API o el ejecutable.</p>
-        <div class="hero-actions">
-          <a class="btn btn-primary" href={`${docs}#quickstart`}>Leer el inicio rápido <Icon name="arrow-right" size={16} /></a>
-          <a class="btn btn-ghost" href={releasesUrl} target="_blank" rel="noreferrer"><Icon name="download" size={16} /> Releases</a>
-        </div>
-      </div>
-    </div>
+  <section id="troubleshooting">
+    <h2>Solución de problemas</h2>
+    <h3>No se encuentra la sesión</h3>
+    <p>
+      Ejecuta <code>login</code> y asegúrate de cerrar todas las ventanas de Chrome antes de
+      verificar la sesión. <code>status</code> debe informar al menos una cookie de Google.
+    </p>
+    <h3>yt-dlp no puede leer las cookies de Chrome</h3>
+    <p>
+      Cierra Chrome, actualiza yt-dlp y vuelve a intentarlo. El cifrado app-bound de Chrome
+      127+ puede requerir otro perfil de navegador o un archivo de cookies exportado.
+    </p>
+    <h3>La API no inicia</h3>
+    <p>
+      Instala el extra con <code>pip install -e ".[api]"</code> o
+      <code>pip install -r requirements.txt</code>. Ejecuta <code>doctor</code> para ver las
+      dependencias faltantes.
+    </p>
+    <h3>El EXE es grande</h3>
+    <p>
+      El paquete yt-dlp embebido y el runtime de Python explican la mayor parte del tamaño. El
+      build slim está limitado intencionalmente a Google Drive y extractores genéricos.
+    </p>
   </section>
-</BaseLayout>
+</DocsLayout>

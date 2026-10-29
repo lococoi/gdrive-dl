@@ -1,0 +1,254 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Icon from "../../components/Icon.astro";
+import FeatureCard from "../../components/FeatureCard.astro";
+import CodeBlock from "../../components/CodeBlock.astro";
+import { docsPath, homePath } from "../../utils/url";
+import { repoUrl, releasesUrl } from "../../data/site";
+
+const lang = "en" as const;
+const docs = docsPath(lang);
+const altHref = homePath("es");
+
+const quickstart = `python -m pip install -e ".[api]"
+
+python gdrive-dl.py login
+python gdrive-dl.py status
+python gdrive-dl.py download "https://drive.google.com/file/d/<FILE_ID>/view"`;
+
+const apiSample = `curl -X POST http://127.0.0.1:8000/download \\
+  -H "Content-Type: application/json" \\
+  -d '{"url":"https://drive.google.com/file/d/<FILE_ID>/view"}'
+
+{
+  "success": true,
+  "status": "downloaded",
+  "output_path": "downloads/video.mp4",
+  "attempts": 1,
+  "duration_seconds": 12.4
+}`;
+
+const features = [
+  {
+    icon: "shield",
+    title: "Isolated Chrome session",
+    body: "A dedicated --user-data-dir keeps your daily browser and its cookies untouched.",
+  },
+  {
+    icon: "layers",
+    title: "Real session verification",
+    body: "Cookie names are read from Chrome's SQLite database in read-only mode before every download.",
+  },
+  {
+    icon: "zap",
+    title: "Resilient downloads",
+    body: "Timeouts, retries with backoff, bounded concurrency, and process-tree cleanup.",
+  },
+  {
+    icon: "lock",
+    title: "Safe by default",
+    body: "HTTPS only, a Google Drive host allowlist, no shell execution, and a -- terminator.",
+  },
+  {
+    icon: "terminal",
+    title: "CLI and HTTP API",
+    body: "One typed engine, two interfaces. Script it or connect a local service to it.",
+  },
+  {
+    icon: "package",
+    title: "Standalone Windows build",
+    body: "A one-file EXE with Python, FastAPI, and the latest yt-dlp package embedded.",
+  },
+];
+
+const docsCards = [
+  { icon: "play", title: "Quick start", body: "Install, authenticate, and download your first file.", href: `${docs}#quickstart` },
+  { icon: "terminal", title: "CLI reference", body: "Commands, flags, environment variables, and exit codes.", href: `${docs}#cli` },
+  { icon: "server", title: "HTTP API", body: "Endpoints, bearer auth, request examples, and error mapping.", href: `${docs}#api` },
+  { icon: "layers", title: "Architecture", body: "Ports, adapters, services, and the composition root.", href: `${docs}#architecture` },
+  { icon: "shield", title: "Security", body: "Threat model, cookie handling, host policy, and limitations.", href: `${docs}#security` },
+  { icon: "wrench", title: "Build and release", body: "PyInstaller, CI, release tags, and the standalone executable.", href: `${docs}#build` },
+];
+---
+
+<BaseLayout
+  title="gdrive-dl · Private Google Drive downloads"
+  description="Download private Google Drive files with an isolated Chrome session, a resilient CLI, a FastAPI server, and a standalone Windows executable."
+  lang={lang}
+  altHref={altHref}
+>
+  <section class="hero">
+    <div class="container hero-inner">
+      <span class="badge"><span class="badge-dot"></span>v1.0.4 · Apache-2.0</span>
+      <h1>Download Google Drive <span class="gradient-text">without friction.</span></h1>
+      <p class="hero-copy">
+        Private files need more than an HTTP request. gdrive-dl isolates the Chrome session,
+        verifies Google auth cookies, and wraps yt-dlp with timeouts, retries, and safe defaults.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href={`${docs}#quickstart`}>
+          Get started <Icon name="arrow-right" size={17} />
+        </a>
+        <a class="btn btn-ghost" href={repoUrl} target="_blank" rel="noreferrer">
+          <Icon name="github" size={17} /> View on GitHub
+        </a>
+      </div>
+      <div class="hero-meta">
+        <span>Chrome profile</span>
+        <span>yt-dlp</span>
+        <span>FastAPI</span>
+        <span>PyInstaller</span>
+        <span>65 tests</span>
+      </div>
+
+      <div class="terminal" data-reveal>
+        <div class="terminal-bar">
+          <span class="terminal-dot"></span>
+          <span class="terminal-dot"></span>
+          <span class="terminal-dot"></span>
+          <span class="terminal-title">gdrive-dl — quickstart</span>
+        </div>
+        <div class="terminal-body">
+          <div class="terminal-line"><span class="prompt">$</span> python gdrive-dl.py login</div>
+          <div class="terminal-line"><span class="dim">opening isolated Chrome profile…</span></div>
+          <div class="terminal-line"><span class="ok">ok</span> Google session verified · 9 auth cookies</div>
+          <div class="terminal-line"><span class="prompt">$</span> python gdrive-dl.py download "https://drive.google.com/file/d/…/view"</div>
+          <div class="terminal-line"><span class="ok">ok</span> video.mp4 · 42.8 MiB · 1 attempt · 12.4s</div>
+          <div class="terminal-line"><span class="prompt">$</span> <span class="terminal-cursor"></span></div>
+        </div>
+      </div>
+
+      <div class="stats-strip" data-reveal>
+        <div class="stat"><div class="stat-value">0</div><div class="stat-label">cloud hops</div></div>
+        <div class="stat"><div class="stat-value">65</div><div class="stat-label">automated tests</div></div>
+        <div class="stat"><div class="stat-value">2</div><div class="stat-label">interfaces: CLI + API</div></div>
+        <div class="stat"><div class="stat-value">1</div><div class="stat-label">portable Windows EXE</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <div class="eyebrow">Why gdrive-dl</div>
+        <h2>Built around the session, not around a hack.</h2>
+        <p>
+          Private Drive downloads fail when the browser session and the downloader disagree.
+          gdrive-dl makes that boundary explicit, testable, and observable.
+        </p>
+      </div>
+      <div class="feature-grid">
+        {features.map((feature) => <FeatureCard {...feature} />)}
+      </div>
+    </div>
+  </section>
+
+  <section class="section-tight">
+    <div class="container">
+      <div class="section-head">
+        <div class="eyebrow">Flow</div>
+        <h2>Four steps, no mystery.</h2>
+      </div>
+      <div class="steps">
+        <article class="step" data-reveal>
+          <div class="step-number">01</div>
+          <h3>Authenticate</h3>
+          <p>Chrome opens with a dedicated profile. You sign in and close every window.</p>
+        </article>
+        <article class="step" data-reveal>
+          <div class="step-number">02</div>
+          <h3>Verify</h3>
+          <p>The cookie database is inspected in read-only mode and the session is confirmed.</p>
+        </article>
+        <article class="step" data-reveal>
+          <div class="step-number">03</div>
+          <h3>Download</h3>
+          <p>yt-dlp runs with the isolated profile, a timeout, retries, and a safe output path.</p>
+        </article>
+        <article class="step" data-reveal>
+          <div class="step-number">04</div>
+          <h3>Observe</h3>
+          <p>Status, diagnostics, logs, and typed errors tell you exactly what happened.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <div class="eyebrow">Documentation</div>
+        <h2>Everything is written down.</h2>
+        <p>Short commands, explicit contracts, and the failure modes that matter.</p>
+      </div>
+      <div class="doc-grid">
+        {docsCards.map((card) => (
+          <a class="doc-card" href={card.href} data-reveal>
+            <span class="icon"><Icon name={card.icon} size={20} /></span>
+            <h3>{card.title}</h3>
+            <p>{card.body}</p>
+            <span class="arrow">Read section <Icon name="arrow-right" size={12} /></span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container split">
+      <div>
+        <div class="eyebrow">CLI</div>
+        <h2>One command. No babysitting.</h2>
+        <p>
+          Login once, verify the session, then download. Every command is safe to automate and
+          every failure has a typed exit code.
+        </p>
+        <ul class="check-list">
+          <li><Icon name="check" size={17} /> Resumable downloads with --continue and --no-overwrites.</li>
+          <li><Icon name="check" size={17} /> Windows-safe filenames and a dedicated output directory.</li>
+          <li><Icon name="check" size={17} /> Status and doctor commands with optional JSON output.</li>
+        </ul>
+        <div class="hero-actions" style="justify-content:flex-start">
+          <a class="btn btn-ghost" href={`${docs}#cli`}>CLI reference <Icon name="arrow-right" size={16} /></a>
+        </div>
+      </div>
+      <CodeBlock title="Quick start" code={quickstart} lang="bash" />
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container split reverse">
+      <CodeBlock title="HTTP API" code={apiSample} lang="bash" />
+      <div>
+        <div class="eyebrow">HTTP API</div>
+        <h2>The same engine, behind a local service.</h2>
+        <p>
+          Start a FastAPI server, protect it with a bearer token, and connect any client.
+          The server binds to localhost by default and requires a token for non-loopback hosts.
+        </p>
+        <div class="api-grid">
+          <div class="api-card"><span class="method">GET</span><code>/status</code><p>Session and tool state.</p></div>
+          <div class="api-card"><span class="method">POST</span><code>/download</code><p>Download a validated URL.</p></div>
+          <div class="api-card"><span class="method">GET</span><code>/healthz</code><p>Liveness probe.</p></div>
+        </div>
+        <div class="hero-actions" style="justify-content:flex-start">
+          <a class="btn btn-ghost" href={`${docs}#api`}>API reference <Icon name="arrow-right" size={16} /></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="cta" data-reveal>
+        <div class="eyebrow">Ready</div>
+        <h2>Your Drive files, without the browser dance.</h2>
+        <p>Clone the repository, authenticate once, and download from the CLI, the API, or the standalone executable.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href={`${docs}#quickstart`}>Read the quick start <Icon name="arrow-right" size={16} /></a>
+          <a class="btn btn-ghost" href={releasesUrl} target="_blank" rel="noreferrer"><Icon name="download" size={16} /> Releases</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
