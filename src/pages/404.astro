@@ -1,0 +1,26 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Icon from "../components/Icon.astro";
+import { docsPath, homePath, withBase } from "../utils/url";
+
+const docs = docsPath("en");
+---
+
+<BaseLayout
+  title="Page not found"
+  description="The page you requested does not exist."
+  lang="en"
+  altHref={withBase("es/404/")}
+>
+  <section class="hero">
+    <div class="container hero-inner" style="min-height:52vh;align-content:center">
+      <span class="badge">404</span>
+      <h1>This page took a wrong turn.</h1>
+      <p class="hero-copy">The link may be old, or the docs may have moved.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href={homePath("en")}>Back home <Icon name="arrow-right" size={16} /></a>
+        <a class="btn btn-ghost" href={`${docs}#quickstart`}>Documentation</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

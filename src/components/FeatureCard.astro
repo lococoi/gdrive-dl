@@ -1,0 +1,16 @@
+---
+import Icon from "./Icon.astro";
+
+interface Props {
+  icon: string;
+  title: string;
+  body: string;
+}
+const { icon, title, body } = Astro.props;
+---
+
+<article class="feature-card spotlight-card" data-reveal>
+  <div class="feature-icon"><Icon name={icon} size={21} /></div>
+  <h3>{title}</h3>
+  <p>{body}</p>
+</article>

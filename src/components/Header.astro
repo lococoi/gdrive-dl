@@ -1,0 +1,101 @@
+---
+import Logo from "./Logo.astro";
+import Icon from "./Icon.astro";
+import { docsPath, homePath } from "../utils/url";
+import { navLabels, repoUrl, type Lang } from "../data/site";
+
+interface Props {
+  lang: Lang;
+  altHref: string;
+}
+
+const { lang, altHref } = Astro.props;
+const labels = navLabels[lang];
+const path = Astro.url.pathname;
+const home = homePath(lang);
+const docs = docsPath(lang);
+const isHome = path === home || path === home.replace(/\/$/, "");
+const isDocs = path.startsWith(docs);
+const nav = [
+  { label: labels.home, href: home, active: isHome },
+  { label: labels.docs, href: docs, active: isDocs },
+  { label: labels.cli, href: `${docs}#cli`, active: false },
+  { label: labels.api, href: `${docs}#api`, active: false },
+];
+---
+
+<header class="site-header">
+  <div class="header-inner container-wide">
+    <a class="brand" href={home} aria-label="gdrive-dl">
+      <Logo class="brand-mark" size={36} />
+      <span class="brand-text">
+        <span class="brand-name">gdrive-dl</span>
+        <span class="brand-tag">Google Drive downloader</span>
+      </span>
+    </a>
+
+    <nav class="nav" aria-label="Primary">
+      {nav.map((item) => (
+        <a href={item.href} aria-current={item.active ? "page" : undefined}>
+          {item.label}
+        </a>
+      ))}
+    </nav>
+
+    <div class="header-actions">
+      <button
+        class="icon-btn theme-toggle"
+        type="button"
+        data-theme-toggle
+        aria-label={lang === "es" ? "Cambiar tema" : "Toggle theme"}
+        title={lang === "es" ? "Cambiar tema" : "Toggle theme"}
+      >
+        <span class="moon"><Icon name="moon" size={18} /></span>
+        <span class="sun"><Icon name="sun" size={18} /></span>
+      </button>
+
+      <a
+        class="lang-link"
+        href={altHref}
+        hreflang={lang === "es" ? "en" : "es"}
+        aria-label={lang === "es" ? "Read in English" : "Leer en español"}
+      >
+        {lang === "es" ? "EN" : "ES"}
+      </a>
+
+      <a
+        class="icon-btn"
+        href={repoUrl}
+        target="_blank"
+        rel="noreferrer"
+        aria-label="GitHub"
+        title="GitHub"
+      >
+        <Icon name="github" size={18} />
+      </a>
+
+      <a class="btn btn-primary btn-sm" href={`${docs}#quickstart`}>
+        {lang === "es" ? "Empezar" : "Get started"}
+        <Icon name="arrow-right" size={15} />
+      </a>
+
+      <button
+        class="icon-btn menu-toggle"
+        type="button"
+        data-menu-toggle
+        aria-controls="mobile-menu"
+        aria-expanded="false"
+        aria-label={lang === "es" ? "Abrir menú" : "Open menu"}
+      >
+        <Icon name="menu" size={19} />
+      </button>
+    </div>
+  </div>
+
+  <div class="mobile-menu container-wide" id="mobile-menu">
+    {nav.map((item) => (
+      <a href={item.href}>{item.label}</a>
+    ))}
+    <a href={repoUrl} target="_blank" rel="noreferrer">GitHub</a>
+  </div>
+</header>

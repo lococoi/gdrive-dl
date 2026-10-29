@@ -1,0 +1,303 @@
+---
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import CodeBlock from "../../components/CodeBlock.astro";
+import Callout from "../../components/Callout.astro";
+import { docsPath } from "../../utils/url";
+
+const lang = "en" as const;
+const altHref = docsPath("es");
+
+const install = `git clone https://github.com/lococoi/gdrive-dl.git
+cd gdrive-dl
+python -m venv .venv
+.venv\\Scripts\\Activate.ps1
+python -m pip install -e ".[api]"`;
+
+const firstRun = `python gdrive-dl.py login
+python gdrive-dl.py status
+python gdrive-dl.py doctor
+python gdrive-dl.py download "https://drive.google.com/file/d/<FILE_ID>/view"`;
+
+const server = `python gdrive-dl.py api --host 127.0.0.1 --port 8000
+
+# Optional bearer token for non-loopback hosts
+$env:GDRIVE_API_TOKEN = "at-least-16-random-characters"
+python gdrive-dl.py api --host 0.0.0.0 --port 8000`;
+
+const curl = `curl http://127.0.0.1:8000/status
+
+curl -X POST http://127.0.0.1:8000/download \\
+  -H "Content-Type: application/json" \\
+  -d '{"url":"https://drive.google.com/file/d/<FILE_ID>/view"}'`;
+
+const tree = `gdrive_dl/
+  errors.py          typed exception hierarchy
+  models.py          immutable value objects
+  ports.py           abstract ports
+  config.py          immutable configuration
+  services.py        login, download, status, doctor
+  container.py       composition root
+  cli.py             command objects and exit codes
+  api.py             FastAPI factory and HTTP mapping
+  infrastructure/
+    chrome.py        Chrome locator, cookie inspector
+    process.py       subprocess runner and tree cleanup
+    yt_dlp.py        downloader and error sanitizer
+tests/               unit and API tests`;
+
+const build = `python -m pip install -r requirements-dev.txt
+python scripts/build_exe.py
+.\\dist\\gdrive-dl.exe --version`;
+---
+
+<DocsLayout
+  title="Documentation"
+  description="Install gdrive-dl, authenticate an isolated Chrome profile, download files from the CLI, run the HTTP API, and build the standalone Windows executable."
+  lang={lang}
+  altHref={altHref}
+  editHref="https://github.com/lococoi/gdrive-dl/blob/gh-pages/src/pages/docs/index.astro"
+>
+  <section id="quickstart">
+    <h2>Quick start</h2>
+    <p>
+      gdrive-dl needs Python 3.11+, Google Chrome, and network access to Google Drive.
+      The install below includes the optional API dependencies.
+    </p>
+    <h3>Install from source</h3>
+    <CodeBlock title="PowerShell" code={install} lang="powershell" />
+    <p>
+      The CLI works without the API extra. Use <code>pip install -e .</code> if you only need
+      the command line. The <code>api</code> command requires FastAPI, Uvicorn, and Pydantic.
+    </p>
+    <h3>Authenticate and download</h3>
+    <CodeBlock title="First run" code={firstRun} lang="bash" />
+    <p>
+      <code>login</code> opens Chrome with a dedicated <code>--user-data-dir</code>. Sign in
+      and close every Chrome window when you are done. The profile is stored in
+      <code>chrome_profile/</code> and is ignored by Git.
+    </p>
+    <Callout type="tip" title="Verify before downloading.">
+      <code>status</code> reads Google authentication cookie names from the Chrome SQLite
+      database in read-only mode. <code>doctor</code> checks Python, Chrome, yt-dlp, the
+      session, output permissions, and free disk space.
+    </Callout>
+    <h3>Download output</h3>
+    <p>
+      Files are written to <code>downloads/</code> by default. The filename template uses
+      the title and the file ID, and Windows-safe names are enforced. Existing files are not
+      overwritten; partial files can be resumed.
+    </p>
+  </section>
+
+  <section id="cli">
+    <h2>CLI reference</h2>
+    <p>Global options can be placed before the command.</p>
+    <table>
+      <thead><tr><th>Command</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>login</td><td>Open Chrome, authenticate, and verify the session.</td></tr>
+        <tr><td>download URL</td><td>Download a Google Drive file with the saved session.</td></tr>
+        <tr><td>status</td><td>Show session state, cookie count, profile path, and yt-dlp version.</td></tr>
+        <tr><td>doctor</td><td>Run environment and configuration diagnostics.</td></tr>
+        <tr><td>api</td><td>Start the local FastAPI server.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Options</h3>
+    <table>
+      <thead><tr><th>Option</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>--output-dir PATH</td><td>Download destination. Defaults to <code>downloads/</code>.</td></tr>
+        <tr><td>--timeout SECONDS</td><td>Login or download timeout, depending on the command.</td></tr>
+        <tr><td>--retries N</td><td>Additional attempts for transient download failures (0-5).</td></tr>
+        <tr><td>--allow-any-host</td><td>Allow public hosts outside the Google Drive allowlist.</td></tr>
+        <tr><td>--profile-dir PATH</td><td>Override the Chrome profile directory.</td></tr>
+        <tr><td>--json</td><td>Machine-readable output for <code>status</code> and <code>doctor</code>.</td></tr>
+        <tr><td>-v, --verbose</td><td>Enable debug logging.</td></tr>
+        <tr><td>--log-level LEVEL</td><td>DEBUG, INFO, WARNING, ERROR, or CRITICAL.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Environment</h3>
+    <table>
+      <thead><tr><th>Variable</th><th>Default</th></tr></thead>
+      <tbody>
+        <tr><td>GDRIVE_PROFILE_DIR</td><td><code>./chrome_profile</code></td></tr>
+        <tr><td>GDRIVE_OUTPUT_DIR</td><td><code>./downloads</code></td></tr>
+        <tr><td>GDRIVE_YTDLP</td><td>Auto-detected binary or command</td></tr>
+        <tr><td>GDRIVE_CHROME</td><td>Auto-detected Chrome executable</td></tr>
+        <tr><td>GDRIVE_LOGIN_TIMEOUT</td><td><code>900</code> seconds</td></tr>
+        <tr><td>GDRIVE_DOWNLOAD_TIMEOUT</td><td><code>3600</code> seconds</td></tr>
+        <tr><td>GDRIVE_RETRIES</td><td><code>2</code></td></tr>
+        <tr><td>GDRIVE_MAX_CONCURRENT</td><td><code>2</code> (API)</td></tr>
+        <tr><td>GDRIVE_ALLOWED_HOSTS</td><td>Google Drive hosts</td></tr>
+        <tr><td>GDRIVE_ALLOW_ANY_HOST</td><td><code>false</code></td></tr>
+        <tr><td>GDRIVE_API_TOKEN</td><td>Unset</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Exit codes</h3>
+    <table>
+      <thead><tr><th>Code</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td>0</td><td>Success.</td></tr>
+        <tr><td>2</td><td>Usage or invalid URL.</td></tr>
+        <tr><td>3</td><td>Configuration error.</td></tr>
+        <tr><td>4</td><td>Session or login error.</td></tr>
+        <tr><td>5</td><td>Download or process failure.</td></tr>
+        <tr><td>6</td><td>Missing dependency or tool.</td></tr>
+        <tr><td>130</td><td>Interrupted by the user.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="api">
+    <h2>HTTP API</h2>
+    <p>
+      The API exposes the same services as the CLI. It binds to <code>127.0.0.1</code> by
+      default. If you bind to a non-loopback interface, a bearer token of at least 16
+      characters is required.
+    </p>
+    <CodeBlock title="Start the server" code={server} lang="powershell" />
+    <table>
+      <thead><tr><th>Method</th><th>Path</th><th>Auth</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>GET</td><td><code>/healthz</code></td><td>No</td><td>Liveness probe.</td></tr>
+        <tr><td>GET</td><td><code>/status</code></td><td>Optional</td><td>Session and tool status.</td></tr>
+        <tr><td>POST</td><td><code>/download</code></td><td>Optional</td><td>Download a validated URL.</td></tr>
+      </tbody>
+    </table>
+    <CodeBlock title="Requests" code={curl} lang="bash" />
+    <h3>Authentication</h3>
+    <p>
+      When <code>GDRIVE_API_TOKEN</code> is set, send
+      <code>Authorization: Bearer &lt;token&gt;</code>. Tokens are compared in constant time
+      and never written to logs.
+    </p>
+    <h3>Error mapping</h3>
+    <table>
+      <thead><tr><th>Status</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td>400</td><td>Invalid or unsupported URL.</td></tr>
+        <tr><td>401</td><td>Missing or invalid bearer token.</td></tr>
+        <tr><td>409</td><td>No valid Google session.</td></tr>
+        <tr><td>429</td><td>Concurrency limit reached.</td></tr>
+        <tr><td>502</td><td>yt-dlp reported a download failure.</td></tr>
+        <tr><td>503</td><td>Required tool or dependency is unavailable.</td></tr>
+        <tr><td>504</td><td>Download timeout.</td></tr>
+      </tbody>
+    </table>
+    <Callout type="note" title="Synchronous contract.">
+      <code>/download</code> returns after the download finishes. Use a client timeout longer
+      than <code>GDRIVE_DOWNLOAD_TIMEOUT</code>, or run multiple clients within the configured
+      concurrency limit.
+    </Callout>
+  </section>
+
+  <section id="architecture">
+    <h2>Architecture</h2>
+    <p>
+      The core is a strict layered object-oriented design. Domain value objects are immutable,
+      ports define infrastructure boundaries, and the composition root is the only place that
+      selects concrete implementations.
+    </p>
+    <h3>Layers</h3>
+    <ul>
+      <li><strong>Domain:</strong> immutable value objects, result types, and typed exceptions.</li>
+      <li><strong>Ports:</strong> session repository, authenticator, downloader, process runner, sleeper, progress, directory preparer.</li>
+      <li><strong>Application services:</strong> login, download, status, and doctor use cases.</li>
+      <li><strong>Infrastructure:</strong> Chrome, SQLite, subprocess, filesystem, logging, and yt-dlp adapters.</li>
+      <li><strong>Interfaces:</strong> CLI command objects and the FastAPI application factory.</li>
+    </ul>
+    <h3>Source layout</h3>
+    <CodeBlock title="Project tree" code={tree} lang="text" />
+    <h3>Download flow</h3>
+    <ol>
+      <li>Validate the URL: HTTPS, host policy, credentials, port, and option injection.</li>
+      <li>Inspect Chrome cookies in read-only SQLite mode and count auth cookies.</li>
+      <li>Prepare the output directory and acquire the concurrency semaphore.</li>
+      <li>Run yt-dlp with the absolute Chrome profile path, timeout, and retry policy.</li>
+      <li>Classify failures into typed exceptions and sanitize error output.</li>
+      <li>Return a download result with status, attempts, duration, and output path.</li>
+    </ol>
+    <Callout type="tip" title="Testability by construction.">
+      The core can be tested without Chrome, network access, or yt-dlp. Browser and downloader
+      adapters are injected through ports.
+    </Callout>
+  </section>
+
+  <section id="security">
+    <h2>Security</h2>
+    <p>
+      The Chrome profile contains sensitive session cookies. Treat <code>chrome_profile/</code>,
+      <code>downloads/</code>, and <code>logs/</code> as private data. They are excluded from
+      version control.
+    </p>
+    <ul>
+      <li>Session status reads cookie names only, in read-only mode. Values are never printed.</li>
+      <li>URLs must use HTTPS. Credentials, private IPs, localhost names, non-standard ports, and Drive folders are rejected.</li>
+      <li>External commands run without a shell; a <code>--</code> terminator prevents option injection.</li>
+      <li>Error messages are sanitized and URL query strings are redacted.</li>
+      <li>The API binds to loopback by default and requires a bearer token for other interfaces.</li>
+      <li>Downloads have timeouts, bounded concurrency, retries, and process-tree cleanup.</li>
+    </ul>
+    <h3>Limitations</h3>
+    <ul>
+      <li>Chrome is required. gdrive-dl does not manage passwords or bypass Google challenges.</li>
+      <li>Chrome 127+ may use app-bound cookie encryption. If yt-dlp cannot decrypt the profile, use a compatible browser/profile or export cookies.</li>
+      <li>The API is designed for local or trusted-network use, not as a public multi-tenant service.</li>
+      <li><code>--allow-any-host</code> permits other public sites but still rejects private IP literals and local hostnames.</li>
+    </ul>
+  </section>
+
+  <section id="build">
+    <h2>Build and release</h2>
+    <p>
+      The standalone Windows executable is built with PyInstaller in one-file mode. It embeds
+      Python, FastAPI, Uvicorn, Pydantic, and the latest yt-dlp package. It still requires
+      Google Chrome for authentication.
+    </p>
+    <CodeBlock title="Build locally" code={build} lang="powershell" />
+    <p>
+      The build script installs the latest yt-dlp release from PyPI, then runs PyInstaller with
+      <code>gdrive-dl.spec</code>. The executable is written to <code>dist/gdrive-dl.exe</code>.
+    </p>
+    <h3>CI and releases</h3>
+    <ul>
+      <li>Tests run on Ubuntu and Windows with Python 3.12.</li>
+      <li>Ruff and mypy validate the source before the build.</li>
+      <li>The Windows build is smoke-tested with <code>--version</code> and <code>status --json</code>.</li>
+      <li>Tags matching <code>v*</code> publish the executable to GitHub Releases.</li>
+    </ul>
+    <Callout type="note" title="Slim extractor set.">
+      The executable bundles Google Drive, generic, and common extractors to keep the binary
+      small. Run from source with the full yt-dlp package for other providers.
+    </Callout>
+  </section>
+
+  <section id="troubleshooting">
+    <h2>Troubleshooting</h2>
+    <h3>No session found</h3>
+    <p>
+      Run <code>login</code> and make sure you close every Chrome window before the session is
+      verified. <code>status</code> should report at least one Google auth cookie.
+    </p>
+    <h3>yt-dlp cannot read Chrome cookies</h3>
+    <p>
+      Close Chrome, update yt-dlp, and retry. Chrome 127+ app-bound encryption may require a
+      different browser profile or an exported cookies file.
+    </p>
+    <h3>The API fails to start</h3>
+    <p>
+      Install the API extra with <code>pip install -e ".[api]"</code> or
+      <code>pip install -r requirements.txt</code>. Run <code>doctor</code> to see missing
+      dependencies.
+    </p>
+    <h3>The EXE is large</h3>
+    <p>
+      The embedded yt-dlp package and Qt-independent Python runtime account for most of the
+      size. The current slim build is intentionally limited to Google Drive and generic
+      extractors.
+    </p>
+  </section>
+</DocsLayout>

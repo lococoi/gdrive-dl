@@ -1,0 +1,156 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+import Icon from "../components/Icon.astro";
+import { docsNav, repoUrl, type Lang } from "../data/site";
+import { docsPath } from "../utils/url";
+
+interface Props {
+  title: string;
+  description: string;
+  lang: Lang;
+  altHref: string;
+  editHref?: string;
+}
+
+const { title, description, lang, altHref, editHref = repoUrl } = Astro.props;
+const nav = docsNav[lang];
+const labels =
+  lang === "es"
+    ? {
+        eyebrow: "Documentación",
+        updated: "Actualizado octubre 2026",
+        search: "Filtrar secciones…",
+        onThisPage: "En esta página",
+        edit: "Editar en GitHub",
+        version: "v1.0.4",
+      }
+    : {
+        eyebrow: "Documentation",
+        updated: "Updated October 2026",
+        search: "Filter sections…",
+        onThisPage: "On this page",
+        edit: "Edit on GitHub",
+        version: "v1.0.4",
+      };
+---
+
+<BaseLayout title={title} description={description} lang={lang} altHref={altHref}>
+  <div class="docs-shell container-wide">
+    <aside class="docs-sidebar" aria-label={labels.eyebrow}>
+      <label class="docs-search">
+        <Icon name="search" size={15} />
+        <input type="search" placeholder={labels.search} data-docs-search />
+      </label>
+      <div>
+        <div class="docs-label">{labels.eyebrow}</div>
+        <nav class="docs-nav" data-docs-nav>
+          {nav.map((item) => (
+            <a href={`${docsPath(lang)}#${item.id}`} data-docs-link={item.id}>
+              {item.label}
+            </a>
+          ))}
+        </nav>
+      </div>
+      <div>
+        <div class="docs-label">{lang === "es" ? "Recursos" : "Resources"}</div>
+        <nav class="docs-nav">
+          <a href={`${repoUrl}/releases`} target="_blank" rel="noreferrer">
+            {lang === "es" ? "Releases" : "Releases"}
+          </a>
+          <a href={`${repoUrl}/issues`} target="_blank" rel="noreferrer">
+            {lang === "es" ? "Issues" : "Issues"}
+          </a>
+          <a href={`${repoUrl}/blob/main/README.md`} target="_blank" rel="noreferrer">
+            README
+          </a>
+        </nav>
+      </div>
+    </aside>
+
+    <article class="docs-content">
+      <header class="docs-hero">
+        <div class="eyebrow">{labels.eyebrow}</div>
+        <h1>{title}</h1>
+        <p>{description}</p>
+        <div class="docs-meta">
+          <span class="badge"><span class="badge-dot"></span>{labels.version}</span>
+          <span class="badge">{labels.updated}</span>
+          <span class="badge">Apache-2.0</span>
+          <a class="badge" href={editHref} target="_blank" rel="noreferrer">
+            {labels.edit}
+            <Icon name="arrow-up-right" size={12} />
+          </a>
+        </div>
+      </header>
+      <div class="prose">
+        <slot />
+      </div>
+    </article>
+
+    <aside class="docs-toc" aria-label={labels.onThisPage}>
+      <div class="docs-label">{labels.onThisPage}</div>
+      <nav class="toc-nav" data-toc></nav>
+    </aside>
+  </div>
+
+  <script>
+    const search = document.querySelector<HTMLInputElement>("[data-docs-search]");
+    const links = Array.from(document.querySelectorAll<HTMLAnchorElement>("[data-docs-link]"));
+
+    search?.addEventListener("input", () => {
+      const query = search.value.trim().toLowerCase();
+      links.forEach((link) => {
+        const match = link.textContent?.toLowerCase().includes(query) ?? true;
+        link.parentElement!.style.display = match ? "" : "none";
+      });
+    });
+
+    const article = document.querySelector<HTMLElement>(".prose");
+    const toc = document.querySelector<HTMLElement>("[data-toc]");
+    const sections = Array.from(
+      article?.querySelectorAll<HTMLElement>("section[id]") ?? [],
+    );
+
+    sections.forEach((section) => {
+      const heading = section.querySelector("h2");
+      if (!heading) return;
+      const link = document.createElement("a");
+      link.href = `#${section.id}`;
+      link.textContent = heading.textContent ?? "";
+      link.dataset.tocLink = section.id;
+      toc?.appendChild(link);
+    });
+
+    const tocLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>("[data-toc-link]"));
+    const sidebarLinks = Array.from(
+      document.querySelectorAll<HTMLAnchorElement>("[data-docs-link]"),
+    );
+
+    const setActive = (id: string) => {
+      tocLinks.forEach((link) => {
+        link.classList.toggle("is-active", link.dataset.tocLink === id);
+      });
+      sidebarLinks.forEach((link) => {
+        link.classList.toggle("is-active", link.dataset.docsLink === id);
+      });
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        if (visible) setActive(visible.target.id);
+      },
+      { rootMargin: "-100px 0px -65% 0px", threshold: [0, 1] },
+    );
+
+    sections.forEach((section) => observer.observe(section));
+
+    tocLinks.forEach((link) => {
+      link.addEventListener("click", () => {
+        if (link.dataset.tocLink) setActive(link.dataset.tocLink);
+      });
+    });
+  </script>
+</BaseLayout>

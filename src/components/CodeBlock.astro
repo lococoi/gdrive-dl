@@ -1,0 +1,27 @@
+---
+import Icon from "./Icon.astro";
+
+interface Props {
+  code: string;
+  lang?: string;
+  title?: string;
+}
+
+const { code, lang = "bash", title } = Astro.props;
+let hash = 0;
+for (const character of `${title ?? ""}${code}`) {
+  hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
+}
+const id = `code-${hash.toString(36)}`;
+---
+
+<div class="code-block">
+  <div class="code-head">
+    <span class="code-lang">{title ?? lang}</span>
+    <button class="copy-btn" type="button" data-copy={id} aria-label="Copy code">
+      <Icon name="copy" size={13} />
+      Copy
+    </button>
+  </div>
+  <pre><code id={id}>{code}</code></pre>
+</div>

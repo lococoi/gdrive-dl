@@ -1,0 +1,66 @@
+---
+import Logo from "./Logo.astro";
+import Icon from "./Icon.astro";
+import { docsPath, homePath } from "../utils/url";
+import {
+  footerLabels,
+  issuesUrl,
+  licenseUrl,
+  releasesUrl,
+  repoUrl,
+  type Lang,
+} from "../data/site";
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const labels = footerLabels[lang];
+const docs = docsPath(lang);
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="container-wide">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <a class="brand" href={homePath(lang)} aria-label="gdrive-dl">
+          <Logo class="brand-mark" size={34} />
+          <span class="brand-text">
+            <span class="brand-name">gdrive-dl</span>
+            <span class="brand-tag">Google Drive downloader</span>
+          </span>
+        </a>
+        <p>{labels.tagline}</p>
+        <div class="hero-meta" style="justify-content:flex-start;margin-top:18px">
+          <span>Apache-2.0</span>
+          <span>Python 3.11+</span>
+          <span>FastAPI</span>
+        </div>
+      </div>
+
+      <div class="footer-col">
+        <h3>{labels.product}</h3>
+        <a href={`${docs}#quickstart`}>{labels.docs}</a>
+        <a href={`${docs}#cli`}>CLI</a>
+        <a href={`${docs}#api`}>API</a>
+        <a href={`${docs}#architecture`}>{lang === "es" ? "Arquitectura" : "Architecture"}</a>
+      </div>
+
+      <div class="footer-col">
+        <h3>{labels.resources}</h3>
+        <a href={repoUrl} target="_blank" rel="noreferrer">
+          GitHub <Icon name="arrow-up-right" size={12} />
+        </a>
+        <a href={releasesUrl} target="_blank" rel="noreferrer">{labels.releases}</a>
+        <a href={issuesUrl} target="_blank" rel="noreferrer">{labels.issues}</a>
+        <a href={licenseUrl} target="_blank" rel="noreferrer">{labels.license}</a>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>© {year} lococoi · gdrive-dl</span>
+      <span>{labels.built}</span>
+    </div>
+  </div>
+</footer>
