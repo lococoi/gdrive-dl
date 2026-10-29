@@ -839,6 +839,9 @@ pre {
 }
 
 .doc-card .arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   margin-top: 8px;
   color: var(--faint);
   font-family: var(--font-mono);
@@ -1051,7 +1054,9 @@ pre {
 }
 
 .footer-col a {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   width: fit-content;
   padding: 4px 0;
   color: var(--muted);
@@ -1226,6 +1231,7 @@ pre {
 }
 
 .prose code:not(pre code) {
+  margin: 0 2px;
   padding: 2px 6px;
   border-radius: 5px;
   background: var(--surface);

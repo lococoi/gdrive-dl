@@ -1,7 +1,7 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Icon from "../components/Icon.astro";
-import { docsPath, homePath, withBase } from "../utils/url";
+import { docsPath, homePath } from "../utils/url";
 
 const docs = docsPath("en");
 ---
@@ -10,7 +10,7 @@ const docs = docsPath("en");
   title="Page not found"
   description="The page you requested does not exist."
   lang="en"
-  altHref={withBase("es/404/")}
+  altHref={homePath("es")}
 >
   <section class="hero">
     <div class="container hero-inner" style="min-height:52vh;align-content:center">
