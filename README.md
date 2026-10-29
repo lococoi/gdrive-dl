@@ -6,6 +6,11 @@
 
 **Private Google Drive downloads without the usual session headaches.**
 
+[![Docs](https://img.shields.io/badge/docs-online-6d5ef7)](https://lococoi.github.io/gdrive-dl/)
+
+Full documentation, CLI reference, API contracts, and architecture notes live at
+**https://lococoi.github.io/gdrive-dl/**.
+
 `gdrive-dl` is a command-line tool and local HTTP API for downloading private Google Drive files with an isolated Chrome profile. It wraps `yt-dlp` with safe defaults, validates the Google session before downloading, and exposes the same download engine through a typed, testable Python package.
 
 [![CI](https://github.com/lococoi/gdrive-dl/actions/workflows/ci.yml/badge.svg)](https://github.com/lococoi/gdrive-dl/actions/workflows/ci.yml)
